@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ishita &amp; Sarvesh · 9–11 December</title>
+  <meta name="description" content="Ishita & Sarvesh are getting married in Mulshi, 9th to 11th December.">
+  <meta name="theme-color" content="#f3efe6">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f3efe6' stroke='%23c8a24a' stroke-width='3'/%3E%3Ctext x='32' y='42' font-family='Georgia' font-size='26' text-anchor='middle' fill='%235b6b86'%3EIS%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/invite/cover.jpg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 1. HOME: the cover of the invite + name/phone check -->
+  <section id="gate" class="gate" aria-labelledby="gate-title">
+    <div class="gate__art">
+      <img src="assets/invite/cover.jpg" alt="Illustrated invitation: Ishita and Sarvesh with their golden retriever. 9th to 11th December. 1+1=3." width="1000" height="1600">
+    </div>
+    <div class="gate__panel">
+      <p class="eyebrow">You're invited</p>
+      <h1 id="gate-title" class="display gate__title">Ishita <span class="amp">&amp;</span> Sarvesh</h1>
+      <p class="gate__dates">9th to 11th December · Mulshi</p>
+      <div class="ornament" aria-hidden="true"><span></span><i>❀</i><span></span></div>
+      <form id="gate-form" class="gate__form" novalidate>
+        <label class="field">
+          <span>Your name</span>
+          <input id="g-name" name="name" type="text" autocomplete="name" placeholder="As on your invite" required>
+        </label>
+        <label class="field">
+          <span>Phone number</span>
+          <input id="g-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98XXX XXXXX" required>
+        </label>
+        <p id="gate-error" class="gate__error" role="alert" hidden></p>
+        <button class="btn btn--primary btn--wide" type="submit">Open the invite <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="gate__heart">♥ 1+1=3 ♥</p>
+    </div>
+  </section>
+
+  <!-- 2–4. The site after a guest is found -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <a class="brand" href="#events" data-nav="events" aria-label="Back to events">
+        <span class="brand__mono">IS</span>
+        <span class="brand__name">Ishita &amp; Sarvesh</span>
+      </a>
+      <nav class="tabs" id="tabs" aria-label="Events"></nav>
+      <nav class="pages" aria-label="Pages">
+        <a href="#events" data-nav="events">Events</a>
+        <a href="#stay" data-nav="stay">Stay</a>
+        <a href="#tinker" data-nav="tinker">Tinker</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="view-events" class="view view--events" aria-label="Events">
+        <div id="scroller" class="scroller"></div>
+        <ol id="dots" class="dots" aria-hidden="true"></ol>
+      </section>
+
+      <section id="view-stay" class="view view--page" aria-labelledby="stay-title" hidden>
+        <div class="page">
+          <p class="eyebrow">Getting there</p>
+          <h2 id="stay-title" class="display page__title">Where are you staying?</h2>
+          <div id="stay-card" class="stay-card"></div>
+          <figure class="map">
+            <div class="map__frame">
+              <img src="assets/map.jpg" alt="Illustrated wedding route map showing Amora Resort, Golden Fields and Palmwoods" width="1024" height="765">
+              <div id="map-spots"></div>
+            </div>
+            <figcaption>Tap a place on the map for directions.</figcaption>
+          </figure>
+          <div id="places" class="places"></div>
+        </div>
+      </section>
+
+      <section id="view-tinker" class="view view--page" aria-labelledby="tinker-title" hidden>
+        <div class="page page--narrow">
+          <p class="eyebrow">Tinker</p>
+          <h2 id="tinker-title" class="display page__title">Shaadi Scramble</h2>
+          <p class="page__lede">Unjumble as many wedding words as you can in 60 seconds.</p>
+          <div id="game" class="game"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Wardrobe planner popup -->
+  <dialog id="wardrobe" class="wardrobe" aria-labelledby="wardrobe-title">
+    <div class="wardrobe__inner">
+      <button class="wardrobe__close" type="button" data-close aria-label="Close">×</button>
+      <div id="wardrobe-body"></div>
+    </div>
+  </dialog>
+
+  <script src="js/guests.js"></script>
+  <script src="js/sha256.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/tinker.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
