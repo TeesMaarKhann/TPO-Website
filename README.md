@@ -13,7 +13,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 2. **Events** – a snap-scrolling list of only the events that guest is invited
    to, with tabs on top and a wardrobe planner popup per event.
 3. **Stay** – which resort the guest is staying at, plus the illustrated map.
-   Each place on the map opens Google Maps directions.
+   Each place on the map opens Google Maps directions. Guests invited to the
+   wedding alone don't see this page.
 4. **Tinker** – a quick word game (Shaadi Scramble).
 
 ## Updating the guest list
@@ -37,7 +38,10 @@ types both, and the browser rebuilds the same key and looks it up.
   phone number or a filled POC column.
 - The script lists anyone who can't log in because neither they nor their
   household has a number. Add a number in the sheet and rebuild.
-- Rebuilding signs everyone out once, so they pick up any changes.
+- Each device remembers the name and number a guest typed, so they only log
+  in once. After a rebuild the site quietly checks the saved details against
+  the new list; guests are only asked again if they're no longer on it.
+  Open `#signout` to forget them on that device.
 
 ## Editing content
 
@@ -46,6 +50,9 @@ types both, and the browser rebuilds the same key and looks it up.
 - The game: `js/tinker.js` (replace it with any game that exposes
   `window.Tinker.mount(element)`)
 - Images: `assets/`
+- The small motifs floating behind each event (`assets/motifs`) are cut from
+  the invites by `tools/cut_motifs.py`. Which set each event uses is
+  `particles` in `js/data.js`.
 
 ## Fonts
 

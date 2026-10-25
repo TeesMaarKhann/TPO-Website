@@ -377,12 +377,15 @@ main { padding-top: var(--topbar); }
   .panel.is-active .d-view .c-art { transform: translateX(-50%); }
 }
 
-/* Faint flower motif of the Haldi and family pages, across the whole desktop page */
-@media (min-width: 900px) and (orientation: landscape) {
+/* Faint flower motif of the Haldi and family invites, carried across the
+   page around the artwork (desktop and phones) */
 .panel--haldi, .panel--welcome {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='%23d9b9ad' fill-opacity='.35'%3E%3Cg id='f'%3E%3Cellipse cx='24' cy='19' rx='3' ry='5'/%3E%3Cellipse cx='24' cy='29' rx='3' ry='5'/%3E%3Cellipse cx='19' cy='24' rx='5' ry='3'/%3E%3Cellipse cx='29' cy='24' rx='5' ry='3'/%3E%3C/g%3E%3Cuse href='%23f' x='48' y='48'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 96px 96px;
+  background-image: url("../assets/motifs/flower-tile.webp");
+  background-size: 74px 74px;
+  background-position: center top;
 }
+@media (min-width: 900px) and (orientation: landscape) {
+  .panel--haldi, .panel--welcome { background-size: 96px 96px; }
 }
 
 /* Next-event cue */
@@ -436,21 +439,15 @@ main { padding-top: var(--topbar); }
 .particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1s; }
 .panel.is-active .particles { opacity: 1; }
 .particles span {
-  position: absolute; bottom: -30px;
-  width: calc(14px * var(--s)); height: calc(14px * var(--s));
+  position: absolute; bottom: -50px;
+  width: var(--size, 18px); height: var(--size, 18px);
+  background: center / contain no-repeat;
   animation: float-up linear infinite;
   animation-play-state: paused;
 }
 .panel.is-active .particles span { animation-play-state: running; }
-.particles--petal span { background: #fcbf63; border-radius: 70% 0 70% 0; opacity: .55; }
-.particles--petal span:nth-child(3n) { background: #fa813e; }
-.particles--petal span:nth-child(4n) { background: #fcb1b6; }
-.particles--sparkle span { background: none; }
-.particles--sparkle span::before { content: "✦"; color: #c9a227; font-size: calc(18px * var(--s)); opacity: .7; }
-.particles--sparkle span:nth-child(2n)::before { color: #3e527c; }
-.particles--heart span { background: none; }
-.particles--heart span::before { content: "♥"; color: #f07e8d; font-size: calc(16px * var(--s)); opacity: .45; }
-.particles--bubble span { border-radius: 50%; border: 1.5px solid rgba(201, 162, 39, .55); background: rgba(252, 220, 180, .25); }
+.particles--flower span, .particles--haldi span { opacity: .9; }
+.particles--marigold span { opacity: .95; }
 
 /* ---------- 3 & 4. Content pages ---------- */
 
@@ -629,7 +626,7 @@ main { padding-top: var(--topbar); }
 @keyframes float-up {
   0% { transform: translate(0, 0) rotate(0); opacity: 0; }
   10% { opacity: 1; }
-  100% { transform: translate(var(--drift), -110vh) rotate(320deg); opacity: 0; }
+  100% { transform: translate(var(--drift), -110vh) rotate(var(--spin, 320deg)); opacity: 0; }
 }
 @keyframes ping { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 @keyframes pop { from { opacity: 0; transform: translateY(30px) scale(.85) rotate(-3deg); } }
