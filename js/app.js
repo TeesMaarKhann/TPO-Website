@@ -281,6 +281,37 @@
   // Paper colour of each invite, so the page around the artwork matches it.
   var PAPER = '#ebe9e5';
 
+  // Desktop: each invite split into pieces (assets/desk) and spread across
+  // the page. Phones: the whole invite on one screen.
+  function deskLayout(key, actions) {
+    function img(name, cls, alt) {
+      return '<img class="d-p ' + cls + '" src="assets/desk/' + name + '.webp" alt="' + esc(alt || '') + '" loading="lazy">';
+    }
+    switch (key) {
+      case 'welcome':
+        return img('family-head', 'w-head', 'Shah and Gujarathi families invite you to join us as we celebrate') +
+          img('family-ishita', 'w-ish', 'Ishita. Granddaughter of Lt. Narayan and Lt. Shanta Arolkar and Shri. Kirit and Smt. Nayana Shah. Daughter of Mr. Nilesh and Mrs. Suchitra Shah.') +
+          '<span class="w-divider" aria-hidden="true"></span>' +
+          img('family-sarvesh', 'w-sar', 'Sarvesh. Grandson of Shri. Chintamani and Lt. Chitra Rahatekar and Lt. Chotalal and Smt. Prabha Gujarathi. Son of Lt. Manish and Mrs. Neha Gujarathi.') +
+          '<div class="d-col w-note">' + actions + '</div>';
+      case 'haldi':
+        return img('haldi-art', 'h-art') +
+          '<div class="d-col h-col">' + img('haldi-text', 'h-text', 'Yello! Haldi and Welcome Lunch to kick things off. 9th December, 11 am onwards. Palmwoods Retreat, Mulshi.') + actions + '</div>';
+      case 'sangeet':
+        return img('sangeet-dance', 's-dance', 'Kar-de-Disco. Time to get on the dance floor!') +
+          img('sangeet-dog', 's-dog') +
+          '<div class="d-col s-col">' + img('sangeet-text', 's-text', '9th December, 7pm onwards. Palmwoods Retreat, Mulshi.') + actions + '</div>';
+      case 'wedding':
+        return img('wedding-strip', 'wd-strip') +
+          '<div class="d-col wd-col">' + img('wedding-title', 'wd-title', 'Phera Pheri') +
+          img('wedding-text', 'wd-text', '10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.') + actions + '</div>';
+      case 'cocktail':
+        return '<img class="d-p c-art" src="assets/invite/cocktail.jpg" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
+          '<div class="d-col c-col">' + actions + '</div>';
+    }
+    return '';
+  }
+
   function artPanel(opts) {
     var sec = el('section', 'panel panel--art ' + opts.cls);
     sec.id = 'ev-' + opts.key;
@@ -289,17 +320,16 @@
     sec.dataset.accent = opts.accent;
     sec.style.setProperty('--ev', opts.accent);
     sec.style.setProperty('--bg', opts.paper || PAPER);
-    sec.innerHTML =
-      '<div class="event">' +
-        '<div class="event__art">' +
-          '<div class="card"><img src="' + opts.img + '" alt="' + esc(opts.alt) + '" loading="' + (opts.eager ? 'eager' : 'lazy') + '" width="1000" height="1600"></div>' +
-        '</div>' +
-        '<div class="event__info">' + (opts.info || '') +
-          '<div class="event__actions">' + opts.actions + '</div>' +
-        '</div>' +
-      '</div>' +
-      (opts.next || '');
     sec.appendChild(particles(opts.particles));
+    var wrap = el('div', 'art-wrap');
+    wrap.innerHTML =
+      '<div class="m-view">' +
+        '<img class="m-img" src="' + opts.img + '" alt="' + esc(opts.alt) + '" loading="' + (opts.eager ? 'eager' : 'lazy') + '" width="1000" height="1600">' +
+        '<div class="m-actions">' + opts.actions + '</div>' +
+      '</div>' +
+      '<div class="d-view d-view--' + opts.key + '">' + deskLayout(opts.key, opts.actions) + '</div>';
+    sec.appendChild(wrap);
+    if (opts.next) sec.insertAdjacentHTML('beforeend', opts.next);
     return sec;
   }
 
@@ -325,18 +355,9 @@
   }
 
   function eventSection(ev, i, list) {
-    var place = PLACES[ev.place];
-    var times = ev.times.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('');
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
       paper: ev.paper, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
-      info:
-        '<h2 class="display event__title">' + esc(ev.title) + '</h2>' +
-        '<p class="event__kicker">' + esc(ev.kicker) + '</p>' +
-        '<div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>' +
-        '<p class="event__date">' + esc(ev.date) + ' <em>' + esc(ev.day) + '</em></p>' +
-        '<p class="event__time">' + times + '</p>' +
-        '<p class="event__venue">' + esc(place.name) + ', ' + esc(place.area) + '</p>',
       actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
         '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
       next: nextCue(list[i + 1])
@@ -409,9 +430,8 @@
 
   function buildStay() {
     var mine = guest.resort && PLACES[guest.resort];
-    $('#stay-line').innerHTML = mine
-      ? 'You’re staying at <strong>' + esc(mine.name) + '</strong>'
-      : 'Coming for the day? Here’s how to find the venues.';
+    $('#stay-title').textContent = mine ? mine.name : 'Getting there';
+    $('#stay-line').textContent = mine ? 'Your stay' : 'Find your way to the celebrations';
     WeddingMap.mount($('#map'), $('#map-panel'), { events: myEvents(), resort: guest.resort });
   }
 

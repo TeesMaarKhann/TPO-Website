@@ -1,7 +1,7 @@
 // Illustrated, clickable map of the three venues. Drawn in SVG so it stays
 // sharp on every screen. Layout follows the real geography around Mulshi
 // (Google Maps): Amora up north on the Kolwan–Paud road, Golden Fields on the
-// west bank, Palmwoods south-east near the 753F highway.
+// west bank, Palmwoods south-east near the highway.
 window.WeddingMap = (function () {
   'use strict';
 
@@ -10,11 +10,11 @@ window.WeddingMap = (function () {
   // Map coordinates (viewBox 0 0 740 640) for each venue and its label.
   var SPOTS = {
     A: { x: 104, y: 92, lx: 140, ly: 98, anchor: 'start' },
-    G: { x: 162, y: 436, lx: 162, ly: 388, anchor: 'middle' },
-    P: { x: 552, y: 566, lx: 552, ly: 622, anchor: 'middle' }
+    G: { x: 162, y: 436, lx: 162, ly: 494, anchor: 'middle' },
+    P: { x: 520, y: 500, lx: 556, ly: 508, anchor: 'start' }
   };
 
-  var ROUTE_A_P = 'M104 92 L118 160 C130 182 165 192 240 220 C292 242 330 268 358 302 C372 330 366 380 380 422 C394 462 418 490 438 512 C456 534 484 560 552 566';
+  var ROUTE_A_P = 'M104 92 L118 160 C130 182 165 192 240 220 C292 242 330 268 358 302 C372 330 366 380 380 422 C394 462 418 490 438 512 C452 526 482 508 520 500';
   var ROUTE_G_J = 'M162 436 C176 462 186 500 205 530 C230 546 262 545 300 524 C330 506 360 492 392 494 C412 496 426 504 438 512';
 
   function svg(tag, attrs, parent) {
@@ -73,13 +73,10 @@ window.WeddingMap = (function () {
     var roads = svg('g', { fill: 'none', stroke: '#b9b2a1', 'stroke-linecap': 'round' }, s);
     svg('path', { d: 'M-10 512 C100 536 150 574 260 586 C360 596 460 594 540 598 C620 602 680 616 750 640', 'stroke-width': 4 }, roads);
     [['M0 92 C40 88 70 90 104 92', 1.6], ['M380 420 C430 400 520 380 600 382 C660 384 700 360 740 350', 1.4],
-     ['M300 520 C320 470 360 440 420 430', 1.2], ['M552 566 C600 540 660 500 740 488', 1.6],
+     ['M300 520 C320 470 360 440 420 430', 1.2], ['M520 500 C580 480 650 470 740 470', 1.6],
      ['M240 220 C220 300 200 360 162 436', 1.2], ['M600 250 C620 300 630 340 600 382', 1.2]].forEach(function (r) {
       svg('path', { d: r[0], 'stroke-width': r[1] }, roads);
     });
-    var hw = svg('g', { transform: 'translate(392 600)' }, s);
-    svg('rect', { x: -20, y: -11, width: 40, height: 20, rx: 4, fill: '#e8c66a' }, hw);
-    svg('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'map-hw' }, hw).textContent = '753F';
 
     // scenery
     var scen = svg('g', {}, s);
@@ -100,12 +97,6 @@ window.WeddingMap = (function () {
       svg('path', { d: d, stroke: '#fff', 'stroke-width': 10, opacity: '.7' }, route);
       svg('path', { d: d, stroke: '#c96f7d', 'stroke-width': 5, class: 'map-route', pathLength: 1 }, route);
     });
-    var tag = svg('g', { transform: 'translate(384 300)', class: 'map-time' }, s);
-    var tagBox = svg('rect', { x: 0, y: -15, width: 10, height: 24, rx: 12 }, tag);
-    svg('text', { x: 12, y: 2 }, tag).textContent = '31 min · 15.5 km';
-    s._fitTag = function () {
-      try { tagBox.setAttribute('width', tag.querySelector('text').getBBox().width + 24); } catch (e) { /* not rendered yet */ }
-    };
 
     // venues
     var pins = svg('g', {}, s);
@@ -123,15 +114,11 @@ window.WeddingMap = (function () {
 
     root.innerHTML = '';
     root.appendChild(s);
-    s._fitTag();
-    if (document.fonts) document.fonts.ready.then(s._fitTag);
     return s;
   }
 
   function mount(root, panel, opts) {
     var s = draw(root);
-    // the Stay page may be hidden when the map is drawn; size the tag when shown
-    new MutationObserver(s._fitTag).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
     var current = null;
 
     function select(k) {
@@ -143,27 +130,57 @@ window.WeddingMap = (function () {
       var events = opts.events.filter(function (e) { return e.place === k; });
       var mine = k === opts.resort;
       var rows = events.map(function (e) {
-        return '<li><span class="mp-ev">' + e.tab + '</span><span class="mp-when">' +
+        return '<li><span class="mp-ev">' + e.tab + ' <i>' + e.date.replace(' December', ' Dec') + '</i></span><span class="mp-when">' +
           e.date.replace(' December', ' Dec') + ' · ' + e.times.join(' · ') + '</span></li>';
       }).join('');
       panel.innerHTML =
-        '<p class="mp-tags">' + (mine ? '<span class="mp-tag">Your stay</span>' : '') +
-          (events.length ? '<span class="mp-tag mp-tag--ev">' + events.length + ' event' + (events.length > 1 ? 's' : '') + ' here</span>' : '') + '</p>' +
-        '<h3 class="mp-name">' + p.name + '</h3>' +
-        '<p class="mp-area">' + p.area + (p.note ? ' · ' + p.note : '') + '</p>' +
-        (rows ? '<ul class="mp-list">' + rows + '</ul>' : '<p class="mp-none">' + (mine ? 'Where you’ll be resting between the celebrations.' : 'Where some of our guests are staying.') + '</p>') +
-        '<a class="mp-go" href="' + p.url + '" target="_blank" rel="noopener">Directions in Google Maps <span aria-hidden="true">↗</span></a>';
-      panel.classList.remove('is-in'); void panel.offsetWidth; panel.classList.add('is-in');
+        '<p class="mp-name">' + p.name + '</p>' +
+        (mine ? '<p class="mp-mine">Your stay</p>' : '') +
+        (rows ? '<ul class="mp-list">' + rows + '</ul>' : '') +
+        '<a class="mp-go" href="' + p.url + '" target="_blank" rel="noopener">Directions <span aria-hidden="true">↗</span></a>';
+
+      // Sit next to the pin. Wide maps: beside it. Narrow (phones): above or below it.
+      var spot = SPOTS[k];
+      var narrow = root.getBoundingClientRect().width < 700;
+      var mode = narrow ? (spot.y > 320 ? 'above' : 'below') : (spot.x < 370 ? 'right' : 'left');
+      panel.className = 'map-card map-card--' + mode;
+      panel.hidden = false;
+      panel.style.left = (spot.x / 740 * 100) + '%';
+      panel.style.top = (spot.y / 640 * 100) + '%';
+      panel.style.setProperty('--sx', '0px');
+      panel.style.setProperty('--sy', '0px');
+      // keep it inside the map
+      var box = root.getBoundingClientRect(), r = panel.getBoundingClientRect();
+      if (box.width) {
+        var sx = 0, sy = 0, pad = 6;
+        if (r.left < box.left + pad) sx = box.left + pad - r.left;
+        if (r.right > box.right - pad) sx = box.right - pad - r.right;
+        if (r.top < box.top) sy = box.top - r.top;
+        if (r.bottom > box.bottom) sy = box.bottom - r.bottom;
+        panel.style.setProperty('--sx', sx + 'px');
+        panel.style.setProperty('--sy', sy + 'px');
+      }
+      void panel.offsetWidth; panel.classList.add('is-in');
+    }
+
+    function close() {
+      current = null;
+      panel.hidden = true;
+      s.querySelectorAll('.venue').forEach(function (v) { v.classList.remove('is-selected'); });
     }
 
     s.addEventListener('click', function (e) {
       var v = e.target.closest('.venue');
-      if (v) select(v.dataset.place);
+      if (v) select(v.dataset.place); else close();
     });
     s.addEventListener('keydown', function (e) {
       var v = e.target.closest && e.target.closest('.venue');
       if (v && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(v.dataset.place); }
     });
+
+    // re-place the card once the Stay page is actually visible
+    new MutationObserver(function () { if (current && document.body.dataset.view === 'stay') select(current); })
+      .observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
 
     select(opts.resort && PLACES[opts.resort] ? opts.resort : (opts.events[0] ? opts.events[0].place : 'P'));
   }

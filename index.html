@@ -45,7 +45,7 @@
   <!-- 2–4. The site after a guest is found -->
   <div id="app" class="app" hidden>
     <header class="topbar">
-      <span class="topbar__names">Ishita &amp; Sarvesh</span>
+      <a class="topbar__names" href="#events" data-nav="events"><img src="assets/names.png" alt="Ishita &amp; Sarvesh" width="904" height="110"></a>
       <a class="brand__mono" href="#events" data-nav="events" aria-label="Events"><img src="assets/logo.png" alt="" width="270" height="270"></a>
       <nav class="pages" aria-label="Pages">
         <a href="#stay" data-nav="stay">Stay</a>
@@ -61,12 +61,11 @@
 
       <section id="view-stay" class="view view--page" aria-labelledby="stay-title" hidden>
         <div class="page">
-          <p class="eyebrow">Getting there</p>
-          <h2 id="stay-title" class="display page__title">Where are you staying?</h2>
+          <h2 id="stay-title" class="display page__title">Getting there</h2>
           <p id="stay-line" class="stay-line"></p>
           <div class="mapbox">
             <div id="map" class="mapbox__map"></div>
-            <div id="map-panel" class="mapbox__panel" aria-live="polite"></div>
+            <div id="map-panel" class="map-card" aria-live="polite"></div>
           </div>
           <p class="mapbox__hint">Tap a place on the map</p>
         </div>

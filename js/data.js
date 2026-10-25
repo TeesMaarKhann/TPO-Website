@@ -18,7 +18,6 @@ window.PLACES = {
     name: 'Amora Resort',
     short: 'Amora',
     area: 'Mulshi',
-    note: '31 min (15.5 km) from Palmwoods',
     url: 'https://maps.app.goo.gl/9heNv7naedXkmVqS8'
   }
 };

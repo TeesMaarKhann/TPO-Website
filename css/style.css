@@ -28,7 +28,7 @@
   --display: "Frunchy Serif", "Fraunces", "Playfair Display", Georgia, serif;
   --serif: "Playfair Display", Georgia, "Times New Roman", serif;
 
-  --topbar: 64px;
+  --topbar: 84px;
   --ease-bounce: cubic-bezier(.34, 1.56, .64, 1);
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   color-scheme: light;
@@ -180,9 +180,11 @@ a { color: inherit; }
   background: var(--page, var(--paper));
   transition: background-color .6s;
 }
-.topbar__names { font-family: var(--display); color: var(--rose); font-size: 1.2rem; white-space: nowrap; }
+.topbar__names { display: block; width: max-content; max-width: 100%; transition: transform .3s var(--ease-bounce); }
+.topbar__names img { display: block; height: 30px; width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+.topbar__names:hover { transform: translateY(-1px); }
 .brand__mono {
-  display: block; width: 56px; height: 56px; text-decoration: none;
+  display: block; width: 74px; height: 74px; text-decoration: none;
   transition: transform .35s var(--ease-bounce);
 }
 .brand__mono img { width: 100%; height: 100%; }
@@ -203,10 +205,10 @@ a { color: inherit; }
 .pages a.is-current::after { transform: scale(1); }
 
 @media (max-width: 899px) {
-  :root { --topbar: 60px; }
+  :root { --topbar: 70px; }
   .topbar { padding: 0 12px; gap: 8px; }
-  .topbar__names { font-size: .95rem; white-space: normal; line-height: 1.05; max-width: 6.5em; }
-  .brand__mono { width: 48px; height: 48px; }
+  .topbar__names img { height: auto; max-height: 20px; }
+  .brand__mono { width: 62px; height: 62px; }
   .pages { gap: 14px; }
   .pages a { font-size: .98rem; }
 }
@@ -235,6 +237,8 @@ main { padding-top: var(--topbar); }
   place-items: center;
   padding: 14px 16px 52px;
 }
+.panel--art { padding: 0; display: block; }
+.art-wrap { position: absolute; inset: 0; z-index: 1; }
 .panel { background: var(--bg, var(--paper)); }
 
 .dots {
@@ -292,25 +296,18 @@ main { padding-top: var(--topbar); }
   .welcome__lead { margin-bottom: .4rem; }
 }
 
-/* Event panel */
-.event {
-  width: 100%; max-width: 1080px; height: 100%;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  justify-items: center;
-  align-items: center;
-  gap: 10px;
-  position: relative; z-index: 1;
+/* ---- Phones (and portrait screens): the whole invite on one screen ---- */
+.m-view {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 8px 12px 34px; gap: 6px;
 }
-.event__art { height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.card { height: 100%; max-height: 100%; aspect-ratio: 1000 / 1600; }
-.card img {
-  width: 100%; height: 100%; object-fit: cover;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 4%, #000 94%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 4%, #000 94%, transparent);
-  mask-composite: intersect;
+.m-img {
+  flex: 0 1 auto; min-height: 0; max-height: calc(100% - 48px); width: auto; max-width: 100%; object-fit: contain;
+  -webkit-mask-image: linear-gradient(to bottom, #000 93%, transparent);
+  mask-image: linear-gradient(to bottom, #000 93%, transparent);
 }
+.m-actions { flex: none; }
+.d-view { display: none; }
 
 /* Text that sits on the invite paper like part of the card */
 .art-link {
@@ -319,73 +316,73 @@ main { padding-top: var(--topbar); }
   font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: var(--ev);
   transition: transform .25s var(--ease-bounce), letter-spacing .25s;
 }
-.art-link__line { width: 34px; height: 1px; background: currentColor; opacity: .6; position: relative; }
-.art-link__line::after { content: "✦"; position: absolute; top: -.62em; font-size: .6rem; font-style: normal; }
-.art-link__line:first-child::after { right: -2px; }
-.art-link__line:last-child::after { left: -2px; }
+.art-link__line { width: 34px; height: 1px; background: currentColor; opacity: .6; }
 .art-link:hover { letter-spacing: .02em; }
 .art-link:active { transform: scale(.96); }
 .art-note { margin: 0; font-style: italic; color: var(--olive); font-size: 1.02rem; line-height: 1.45; text-align: center; }
 .art-note__hi { display: block; color: var(--rose-deep); font-size: 1.15rem; }
-
-.event__info { text-align: center; width: 100%; max-width: 440px; }
-.event__info .eyebrow { margin-bottom: .2rem; }
-.event__title { color: var(--ev); font-size: clamp(1.9rem, 7vw, 4.2rem); }
-.event__kicker { margin: .25rem 0 0; font-style: italic; color: var(--olive); font-size: clamp(.95rem, 3.3vw, 1.2rem); }
-.event__info .ornament { margin: .5rem auto; color: var(--ev); }
-.event__date { margin: 0; font-size: clamp(1.15rem, 4vw, 1.7rem); color: var(--rose-deep); }
-.event__date em { font-size: .7em; color: var(--muted); margin-left: .2em; }
-.event__time { margin: .1rem 0 .2rem; font-style: italic; color: var(--rose-deep); display: flex; flex-wrap: wrap; justify-content: center; gap: .1rem 1rem; }
-.event__venue { display: inline-block; color: var(--ink); text-decoration-color: var(--sage); text-underline-offset: 4px; }
-.event__venue:hover { color: var(--ev); }
-.event__actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: .8rem; }
-
-.dress { display: flex; align-items: center; justify-content: center; gap: .7rem; margin-top: .6rem; flex-wrap: wrap; }
-.dress__label { font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; color: #a35a3f; }
-.swatches { display: inline-flex; gap: 6px; }
-.swatches i {
-  width: 16px; height: 16px; border-radius: 50%; background: var(--c);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
+@media (max-width: 899px), (orientation: portrait) {
+  .m-actions .art-note { font-size: .9rem; line-height: 1.35; }
+  .m-actions .art-note__hi { font-size: 1rem; }
 }
-.swatches--lg i { width: 26px; height: 26px; }
 
-/* Phones: the invite fills the screen edge to edge, wardrobe button below */
-@media (max-width: 899px) {
-  .panel { padding: 0 0 40px; }
-  .panel--outro { padding: 16px 18px 40px; }
-  .event { display: flex; flex-direction: column; justify-content: flex-start; gap: 0; height: 100%; }
-  .event__art { width: 100%; height: auto; min-height: 0; flex: 0 1 auto; }
-  .card { width: 100%; height: auto; aspect-ratio: auto; }
-  .card img {
-    height: auto; max-height: calc(100svh - var(--topbar) - 96px); object-fit: cover; object-position: top;
-    -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent);
-    mask-image: linear-gradient(to bottom, #000 90%, transparent);
+/* ---- Desktop: the invite pieces spread across the whole page ---- */
+@media (min-width: 900px) and (orientation: landscape) {
+  .m-view { display: none; }
+  .d-view { display: block; position: absolute; inset: 0; }
+  .d-p { position: absolute; object-fit: contain; }
+  .d-col { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 1.2vh; }
+  .d-col .d-p { position: static; }
+  .art-link { font-size: 1.3rem; }
+
+  /* Welcome: invitation line on top, the two families either side */
+  .w-head { left: 50%; top: 5%; height: 19%; max-width: 70vw; transform: translateX(-50%); }
+  .w-ish { left: 4%; top: 30%; height: 38%; width: 44vw; object-position: center; }
+  .w-sar { right: 4%; top: 30%; height: 38%; width: 44vw; object-position: center; }
+  .w-divider { position: absolute; left: 50%; top: 32%; height: 34%; width: 1px; background: linear-gradient(transparent, var(--rose), transparent); opacity: .6; }
+  .w-note { left: 50%; bottom: 10%; transform: translateX(-50%); width: min(640px, 80vw); }
+  .w-note .art-note { font-size: 1.2rem; }
+
+  /* Haldi: the couple big along the bottom-left, the words on the right */
+  .h-art { left: 0; bottom: 0; height: 74%; width: 62vw; object-position: left bottom; }
+  .h-col { right: 5%; top: 50%; transform: translateY(-50%); width: 32vw; }
+  .h-text { height: 66vh; max-height: calc(100vh - var(--topbar) - 140px); width: 100%; object-fit: contain; }
+
+  /* Sangeet: dancers top-right, DJ dog bottom-left, date in between */
+  .s-dance { right: 0; top: 0; height: 100%; width: 60vw; object-position: right top; }
+  .s-dog { left: 0; bottom: 0; height: 60%; width: 40vw; object-position: left bottom; }
+  .s-col { left: 19%; top: 16%; width: 22vw; }
+  .s-text { width: 100%; height: auto; max-height: 34vh; }
+
+  /* Phera Pheri: film strip down the left, title and details on the right */
+  .wd-strip { left: 6%; top: 0; height: 100%; width: 34vw; object-position: left top; }
+  .wd-col { right: 10%; top: 50%; transform: translateY(-50%); width: 34vw; }
+  .wd-title { width: 100%; height: auto; max-height: 30vh; }
+  .wd-text { width: 80%; height: auto; max-height: 40vh; }
+
+  /* Toast & Tonic: the glass and the couple full height in the middle,
+     the sky and grass carried across the whole page */
+  .panel--cocktail { background: linear-gradient(#fbf8f1 0%, #f9f6ed 25%, #f8eee1 32%, #f8f2e9 42%, #f9f6ed 62%, #f8f1e4 72%, #e9dcc9 76%, #9a9372 80%, #8f8a66 100%); }
+  .c-art {
+    left: 50%; top: 0; height: 100%; transform: translateX(-50%);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
   }
-  /* The invite already says all of this */
-  .event__info > :not(.event__actions) { display: none; }
-  .event__info { flex: none; }
-  .event__actions { margin-top: 4px; padding: 0 20px; }
+  .c-col { right: 6%; top: 46%; }
+  .panel--cocktail .scroll-cue--next { color: #fff; }
+
+  .panel.is-active .d-view .w-head, .panel.is-active .d-view .w-note,
+  .panel.is-active .d-view .h-col, .panel.is-active .d-view .wd-col { transform: translateX(-50%); }
+  .panel.is-active .d-view .h-col, .panel.is-active .d-view .wd-col { transform: translateY(-50%); }
+  .panel.is-active .d-view .c-art { transform: translateX(-50%); }
 }
 
-/* Desktop / landscape: card left, details right */
-@media (min-width: 900px) {
-  .panel { padding: 28px 64px 56px; }
-  .event { grid-template-columns: auto minmax(320px, 440px); grid-template-rows: 1fr; gap: clamp(32px, 6vw, 96px); justify-content: center; }
-  .event__art { height: min(100%, 74vh); }
-  .event__info { text-align: left; }
-  .event__info .ornament { margin: 1.1rem 0; }
-  .event__time, .event__actions, .dress { justify-content: flex-start; }
-  .event__date { margin-top: .2rem; }
-  .event__venue { margin-top: .3rem; font-size: 1.1rem; }
-  .dress { margin-top: 1.1rem; }
-  .event__actions { margin-top: 1.4rem; }
-  .panel--event:nth-child(odd) .event { grid-template-columns: minmax(320px, 440px) auto; }
-  .panel--event:nth-child(odd) .event__art { order: 2; }
-  .panel--event:nth-child(odd) .event__info { text-align: right; }
-  .panel--event:nth-child(odd) .event__info .ornament { margin-left: auto; margin-right: 0; }
-  .panel--event:nth-child(odd) .event__time,
-  .panel--event:nth-child(odd) .event__actions,
-  .panel--event:nth-child(odd) .dress { justify-content: flex-end; }
+/* Faint flower motif of the Haldi and family pages, across the whole desktop page */
+@media (min-width: 900px) and (orientation: landscape) {
+.panel--haldi, .panel--welcome {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='%23d9b9ad' fill-opacity='.35'%3E%3Cg id='f'%3E%3Cellipse cx='24' cy='19' rx='3' ry='5'/%3E%3Cellipse cx='24' cy='29' rx='3' ry='5'/%3E%3Cellipse cx='19' cy='24' rx='5' ry='3'/%3E%3Cellipse cx='29' cy='24' rx='5' ry='3'/%3E%3C/g%3E%3Cuse href='%23f' x='48' y='48'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 96px 96px;
+}
 }
 
 /* Next-event cue */
@@ -412,36 +409,31 @@ main { padding-top: var(--topbar); }
 .event__actions--center { justify-content: center !important; flex-wrap: wrap !important; }
 .outro__out { margin-top: 2rem; font-size: .9rem; color: var(--muted); }
 
-/* ---------- Scroll animation: each panel "deals" its card in ---------- */
+/* ---------- Scroll animation: pieces rise into place ---------- */
 
-.panel .card,
-.panel .event__info > *,
-.welcome > *,
-.outro > * {
+.m-img, .m-actions, .d-p, .d-col, .w-divider,
+.welcome > *, .outro > * {
   opacity: 0;
-  transition: opacity .6s var(--ease-out), transform .8s var(--ease-bounce);
+  transition: opacity .7s var(--ease-out), transform .9s var(--ease-out);
 }
-.panel .card { transform: translateY(48px) scale(.96); transform-origin: 50% 0; }
-.panel .event__info > *, .welcome > *, .outro > * { transform: translateY(24px); }
-
-.panel.is-active .card { opacity: 1; transform: none; }
-.panel.is-active .event__info > *,
-.panel.is-active .welcome > *,
-.panel.is-active .outro > * { opacity: 1; transform: none; }
-
-.panel.is-active .event__info > *:nth-child(1), .panel.is-active .welcome > *:nth-child(1), .panel.is-active .outro > *:nth-child(1) { transition-delay: .15s; }
-.panel.is-active .event__info > *:nth-child(2), .panel.is-active .welcome > *:nth-child(2), .panel.is-active .outro > *:nth-child(2) { transition-delay: .22s; }
-.panel.is-active .event__info > *:nth-child(3), .panel.is-active .welcome > *:nth-child(3), .panel.is-active .outro > *:nth-child(3) { transition-delay: .29s; }
-.panel.is-active .event__info > *:nth-child(4), .panel.is-active .welcome > *:nth-child(4), .panel.is-active .outro > *:nth-child(4) { transition-delay: .36s; }
-.panel.is-active .event__info > *:nth-child(5), .panel.is-active .welcome > *:nth-child(5), .panel.is-active .outro > *:nth-child(5) { transition-delay: .43s; }
-.panel.is-active .event__info > *:nth-child(6), .panel.is-active .welcome > *:nth-child(6), .panel.is-active .outro > *:nth-child(6) { transition-delay: .5s; }
-.panel.is-active .event__info > *:nth-child(7), .panel.is-active .welcome > *:nth-child(7) { transition-delay: .57s; }
-.panel.is-active .event__info > *:nth-child(8) { transition-delay: .64s; }
-.panel.is-active .event__info > *:nth-child(9) { transition-delay: .71s; }
-
+.m-img, .m-actions, .welcome > *, .outro > * { transform: translateY(36px); }
+.panel.is-active .m-img, .panel.is-active .m-actions,
+.panel.is-active .welcome > *, .panel.is-active .outro > * { opacity: 1; transform: none; }
+.panel.is-active .m-actions { transition-delay: .25s; }
+@media (min-width: 900px) and (orientation: landscape) {
+  .d-p, .d-col, .w-divider { translate: 0 40px; transition: opacity .8s var(--ease-out), translate 1s var(--ease-out); }
+  .panel.is-active .d-p, .panel.is-active .d-col, .panel.is-active .w-divider { opacity: 1; translate: 0 0; }
+  .panel.is-active .d-view > :nth-child(2) { transition-delay: .12s; }
+  .panel.is-active .d-view > :nth-child(3) { transition-delay: .24s; }
+  .panel.is-active .d-view > :nth-child(4) { transition-delay: .36s; }
+  .panel.is-active .d-view > :nth-child(5) { transition-delay: .48s; }
+  .d-col .d-p { opacity: 1; translate: none; }
+}
+.panel.is-active .outro > *:nth-child(2) { transition-delay: .12s; }
+.panel.is-active .outro > *:nth-child(3) { transition-delay: .24s; }
 
 /* Floating bits behind each panel */
-.particles { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 1s; }
+.particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1s; }
 .panel.is-active .particles { opacity: 1; }
 .particles span {
   position: absolute; bottom: -30px;
@@ -473,13 +465,11 @@ main { padding-top: var(--topbar); }
 .view--page:not([hidden]) .page > *:nth-child(4) { animation-delay: .18s; }
 .view--page:not([hidden]) .page > *:nth-child(5) { animation-delay: .24s; }
 
-/* Stay: drawn map + venue details beside it (below on phones) */
-.stay-line { margin: .6rem 0 1.4rem; font-style: italic; color: var(--olive); font-size: 1.1rem; }
-.stay-line strong { font-style: normal; font-weight: 500; color: var(--rose-deep); }
-.mapbox { display: grid; gap: 18px; text-align: left; }
-@media (min-width: 900px) { .mapbox { grid-template-columns: minmax(0, 1fr) 320px; align-items: center; gap: 36px; } }
+/* Stay: resort name, "Your stay", then the drawn map with a small card by the tapped pin */
+.stay-line { margin: .3rem 0 1.2rem; font-style: italic; color: var(--olive); font-size: 1.2rem; }
+.mapbox { position: relative; width: min(880px, 100%, (100svh - var(--topbar) - 230px) * 740 / 640); margin: 0 auto; text-align: left; }
 .mapbox__map { --map-paper: var(--paper); }
-.mapbox__hint { margin: .8rem 0 0; font-style: italic; color: var(--muted); font-size: .9rem; }
+.mapbox__hint { margin: .6rem 0 0; font-style: italic; color: var(--muted); font-size: .9rem; }
 .map-svg {
   display: block; width: 100%; height: auto;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
@@ -488,9 +478,6 @@ main { padding-top: var(--topbar); }
   mask-composite: intersect;
 }
 .map-village { font-family: var(--serif); font-style: italic; font-size: 15px; fill: #9a9682; }
-.map-hw { font-family: var(--serif); font-size: 11px; fill: #5c4b1d; font-weight: 500; }
-.map-time rect { fill: var(--paper); stroke: #c96f7d; stroke-width: 1; }
-.map-time text { font-family: var(--serif); font-style: italic; font-size: 11.5px; fill: var(--rose-deep); }
 .map-route { stroke-dasharray: 1; stroke-dashoffset: 1; }
 .view--page:not([hidden]) .map-route { animation: draw 2.2s .3s var(--ease-out) forwards; }
 .map-sparkle { transform-box: fill-box; transform-origin: center; animation: twinkle 2.6s ease-in-out infinite; }
@@ -507,24 +494,45 @@ main { padding-top: var(--topbar); }
 .venue.is-selected .venue__name { fill: var(--rose-deep); }
 .venue:focus-visible .venue__halo { transform: scale(1); }
 
-.mapbox__panel { padding: 4px 4px 0; }
-.mapbox__panel.is-in > * { animation: rise .45s var(--ease-out) both; }
-.mapbox__panel.is-in > *:nth-child(2) { animation-delay: .04s; }
-.mapbox__panel.is-in > *:nth-child(3) { animation-delay: .08s; }
-.mapbox__panel.is-in > *:nth-child(4) { animation-delay: .12s; }
-.mapbox__panel.is-in > *:nth-child(5) { animation-delay: .16s; }
-.mp-tags { margin: 0 0 .4rem; display: flex; gap: 6px; min-height: 1.4em; }
-.mp-tag { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: #fff; background: var(--rose); padding: .15rem .55rem; border-radius: 999px; }
-.mp-tag--ev { background: none; color: var(--olive); border: 1px solid var(--sage); }
-.mp-name { margin: 0; font-family: var(--display); font-weight: 400; color: var(--rose-deep); font-size: clamp(1.8rem, 6vw, 2.3rem); line-height: 1.05; }
-.mp-area { margin: .2rem 0 .8rem; color: var(--muted); font-style: italic; }
-.mp-list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 8px; }
-.mp-list li { display: grid; gap: 1px; padding-left: 14px; border-left: 2px solid var(--sage-soft); }
-.mp-ev { font-size: 1.1rem; color: var(--ink); }
-.mp-when { font-style: italic; color: var(--olive); font-size: .95rem; }
-.mp-none { color: var(--muted); font-style: italic; margin: 0 0 1rem; }
-.mp-go { color: var(--rose-deep); font-style: italic; font-size: 1.05rem; text-decoration-color: rgba(201, 111, 125, .4); text-underline-offset: 4px; }
-.mp-go:hover { text-decoration-color: currentColor; }
+.map-card {
+  --tx: 44px; --ty: -26px;
+  position: absolute; z-index: 3; width: max-content; max-width: min(250px, 62%);
+  transform: translate(calc(var(--tx) + var(--sx, 0px)), calc(var(--ty) + var(--sy, 0px)));
+  background: var(--card); border-radius: 12px; padding: 12px 14px;
+  box-shadow: 0 10px 28px -12px rgba(63, 64, 51, .45), 0 0 0 1px rgba(107, 122, 69, .15);
+}
+.map-card::before {
+  content: ""; position: absolute; width: 12px; height: 12px; background: var(--card); transform: rotate(45deg);
+}
+.map-card--right::before { left: -6px; top: calc(20px - var(--sy, 0px)); }
+.map-card--left { --tx: calc(-100% - 44px); }
+.map-card--left::before { right: -6px; top: calc(20px - var(--sy, 0px)); }
+.map-card--above { --tx: -50%; --ty: calc(-100% - 30px); }
+.map-card--above::before { bottom: -6px; left: calc(50% - 6px - var(--sx, 0px)); }
+.map-card--below { --tx: -50%; --ty: 30px; }
+.map-card--below::before { top: -6px; left: calc(50% - 6px - var(--sx, 0px)); }
+.map-card.is-in { animation: card-pop .35s var(--ease-bounce); }
+.mp-name { margin: 0; font-family: var(--display); color: var(--rose-deep); font-size: 1.25rem; line-height: 1.1; }
+.mp-mine { margin: .1rem 0 0; font-style: italic; color: var(--olive); font-size: .95rem; }
+.mp-list { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: 4px; }
+.mp-list li { display: grid; padding-left: 9px; border-left: 2px solid var(--sage-soft); }
+.mp-ev { font-size: .98rem; color: var(--ink); line-height: 1.2; }
+.mp-ev i { display: none; }
+.mp-when { font-style: italic; color: var(--olive); font-size: .82rem; }
+.mp-go { display: inline-block; margin-top: .5rem; color: var(--rose-deep); font-style: italic; font-size: .95rem; text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  .map-card { padding: 9px 11px; }
+  .mapbox { width: 100%; }
+  .mp-name { font-size: 1rem; }
+  .mp-mine { font-size: .85rem; }
+  .mp-ev { font-size: .85rem; }
+  .mp-ev i { display: inline; color: var(--olive); font-size: .8rem; }
+  .mp-when { display: none; }
+  .mp-list { margin-top: .3rem; gap: 2px; }
+  .mp-go { margin-top: .3rem; font-size: .85rem; }
+  .map-card { max-width: 52%; }
+  .mp-when { font-size: .76rem; }
+}
 
 /* ---------- Wardrobe dialog ---------- */
 
@@ -633,6 +641,7 @@ main { padding-top: var(--topbar); }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes twinkle { 50% { transform: scale(.55); opacity: .5; } }
 @keyframes halo { 50% { opacity: .55; } }
+@keyframes card-pop { from { opacity: 0; scale: .85; } }
 @keyframes confetti { to { transform: translate(var(--x), var(--y)) rotate(var(--r)); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
