@@ -20,25 +20,52 @@
 
   /* ---------- Guest lookup (must match tools/build_guests.py) ---------- */
 
-  function normName(name) {
+  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'family', 'mr', 'mrs', 'ms', 'dr'];
+
+  function nameWords(name) {
     name = name.toLowerCase().replace(/\(.*?\)/g, ' ').trim().replace(/^\w+_\s*/, '');
-    return (name.match(/[a-z]+/g) || []).sort().join(' ');
+    return name.match(/[a-z]+/g) || [];
+  }
+  // Full name (word order ignored), then the first name on its own.
+  function nameKeys(name) {
+    var w = nameWords(name);
+    var keys = [];
+    if (w.length) {
+      keys.push(w.slice().sort().join(' '));
+      if (w.length > 1 && w[0].length > 1 && NOT_NAMES.indexOf(w[0]) < 0) keys.push(w[0]);
+    }
+    return keys;
   }
   function normPhone(phone) {
     var d = String(phone || '').replace(/\D/g, '');
     return d.length >= 8 ? d.slice(-10) : '';
   }
-  function hash(kind, value) {
-    return sha256(GUESTS.salt + '|' + kind + ':' + value).slice(0, 16);
+
+  // Slow on purpose (PBKDF2, GUESTS.iter rounds) so the list can't be guessed.
+  function deriveKey(text) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(text), 'PBKDF2', false, ['deriveBits'])
+      .then(function (k) {
+        return crypto.subtle.deriveBits(
+          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, 96);
+      })
+      .then(function (bits) {
+        return Array.prototype.map.call(new Uint8Array(bits), function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+      });
   }
 
+  // Resolves to [events, resort] or null. Needs both name and phone.
   function findGuest(name, phone) {
     var p = normPhone(phone);
-    var n = normName(name);
-    var byPhone = p ? GUESTS.p[hash('p', p)] : null;
-    var byName = n ? GUESTS.n[hash('n', n)] : null;
-    // Phone is the more reliable match; fall back to name.
-    return byPhone || byName || null;
+    var keys = nameKeys(name);
+    if (!p || !keys.length || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+    return keys.reduce(function (found, n) {
+      return found.then(function (hit) {
+        return hit || deriveKey(n + '|' + p).then(function (k) { return GUESTS.g[k] || null; });
+      });
+    }, Promise.resolve(null));
   }
 
   function save(g) {
@@ -65,14 +92,21 @@
       if (!name || !phone) {
         return showErr('Please add both your name and phone number.');
       }
-      var match = findGuest(name, phone);
-      if (!match) {
-        return showErr('We couldn’t find you on the guest list. Try the name and number your invite was sent to, or give Ishita or Sarvesh a call.');
-      }
+      var btn = form.querySelector('button[type=submit]');
+      var label = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Checking the guest list…';
       err.hidden = true;
-      guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
-      save(guest);
-      enter(true);
+      findGuest(name, phone).then(function (match) {
+        btn.disabled = false;
+        btn.innerHTML = label;
+        if (!match) {
+          return showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+        }
+        guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+        save(guest);
+        enter(true);
+      });
     });
 
     function showErr(msg) {
@@ -109,6 +143,7 @@
 
   function route() {
     var page = (location.hash || '#events').slice(1);
+    if (page === 'signout') return signOut();  // handy for testing: open #signout
     if (['events', 'stay', 'tinker'].indexOf(page) < 0 && !$('#ev-' + page)) page = 'events';
     var isEvent = !!$('#ev-' + page);
     var view = isEvent ? 'events' : page;
@@ -123,7 +158,13 @@
       else a.removeAttribute('aria-current');
     });
     if (isEvent) goTo(page, false);
-    if (view !== 'events') window.scrollTo(0, 0);
+    if (view !== 'events') {
+      window.scrollTo(0, 0);
+      document.body.style.setProperty('--page', PAPER);
+    } else {
+      var act = document.querySelector('.panel.is-active');
+      if (act) document.body.style.setProperty('--page', act.style.getPropertyValue('--bg') || PAPER);
+    }
   }
 
   /* ---------- Events scroller ---------- */
@@ -136,9 +177,8 @@
 
   function buildEvents() {
     var scroller = $('#scroller');
-    var tabs = $('#tabs');
     var dots = $('#dots');
-    scroller.innerHTML = tabs.innerHTML = dots.innerHTML = '';
+    scroller.innerHTML = dots.innerHTML = '';
     var list = myEvents();
 
     scroller.appendChild(welcomeSection(list));
@@ -150,22 +190,14 @@
     sections = Array.prototype.slice.call(scroller.children);
     sections.forEach(function (sec) {
       var label = sec.dataset.tab;
-      var t = el('a', 'tab', esc(label));
-      t.href = '#' + sec.dataset.key;
-      t.dataset.target = sec.dataset.key;
-      t.addEventListener('click', function (e) {
-        e.preventDefault();
-        if (location.hash !== '#events') history.replaceState(null, '', '#events');
-        route();
+      var d = el('li');
+      var b = el('button', 'dot', '<span>' + esc(label) + '</span>');
+      b.type = 'button';
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', function () {
+        if (document.body.dataset.view !== 'events') location.hash = '#events';
         goTo(sec.dataset.key, true);
       });
-      tabs.appendChild(t);
-
-      var d = el('li');
-      var b = el('button', 'dot');
-      b.type = 'button';
-      b.title = label;
-      b.addEventListener('click', function () { goTo(sec.dataset.key, true); });
       d.appendChild(b);
       dots.appendChild(d);
     });
@@ -215,15 +247,14 @@
       var on = s === sec;
       s.classList.toggle('is-active', on);
       if (on) s.classList.add('has-shown');
-      var tab = $('#tabs').children[i];
       var dot = $('#dots').children[i];
-      if (tab) {
-        tab.classList.toggle('is-active', on);
-        if (on) tab.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      if (dot) {
+        dot.firstChild.classList.toggle('is-active', on);
+        if (on) dot.firstChild.setAttribute('aria-current', 'true'); else dot.firstChild.removeAttribute('aria-current');
       }
-      if (dot) dot.firstChild.classList.toggle('is-active', on);
     });
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
+    document.body.style.setProperty('--page', sec.style.getPropertyValue('--bg') || PAPER);
   }
 
   function goTo(key, smooth) {
@@ -247,85 +278,90 @@
     return wrap;
   }
 
+  // Paper colour of each invite, so the page around the artwork matches it.
+  var PAPER = '#ebe9e5';
+
+  // Desktop: each invite split into pieces (assets/desk) and spread across
+  // the page. Phones: the whole invite on one screen.
+  function deskLayout(key, actions) {
+    function img(name, cls, alt) {
+      return '<img class="d-p ' + cls + '" src="assets/desk/' + name + '.webp" alt="' + esc(alt || '') + '" loading="lazy">';
+    }
+    switch (key) {
+      case 'welcome':
+        return img('family-head', 'w-head', 'Shah and Gujarathi families invite you to join us as we celebrate') +
+          img('family-ishita', 'w-ish', 'Ishita. Granddaughter of Lt. Narayan and Lt. Shanta Arolkar and Shri. Kirit and Smt. Nayana Shah. Daughter of Mr. Nilesh and Mrs. Suchitra Shah.') +
+          '<span class="w-divider" aria-hidden="true"></span>' +
+          img('family-sarvesh', 'w-sar', 'Sarvesh. Grandson of Shri. Chintamani and Lt. Chitra Rahatekar and Lt. Chotalal and Smt. Prabha Gujarathi. Son of Lt. Manish and Mrs. Neha Gujarathi.') +
+          '<div class="d-col w-note">' + actions + '</div>';
+      case 'haldi':
+        return img('haldi-art', 'h-art') +
+          '<div class="d-col h-col">' + img('haldi-text', 'h-text', 'Yello! Haldi and Welcome Lunch to kick things off. 9th December, 11 am onwards. Palmwoods Retreat, Mulshi.') + actions + '</div>';
+      case 'sangeet':
+        return img('sangeet-dance', 's-dance', 'Kar-de-Disco. Time to get on the dance floor!') +
+          img('sangeet-dog', 's-dog') +
+          '<div class="d-col s-col">' + img('sangeet-text', 's-text', '9th December, 7pm onwards. Palmwoods Retreat, Mulshi.') + actions + '</div>';
+      case 'wedding':
+        return img('wedding-strip', 'wd-strip') +
+          '<div class="d-col wd-col">' + img('wedding-title', 'wd-title', 'Phera Pheri') +
+          img('wedding-text', 'wd-text', '10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.') + actions + '</div>';
+      case 'cocktail':
+        return '<img class="d-p c-art" src="assets/invite/cocktail.jpg" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
+          '<div class="d-col c-col">' + actions + '</div>';
+    }
+    return '';
+  }
+
+  function artPanel(opts) {
+    var sec = el('section', 'panel panel--art ' + opts.cls);
+    sec.id = 'ev-' + opts.key;
+    sec.dataset.key = opts.key;
+    sec.dataset.tab = opts.tab;
+    sec.dataset.accent = opts.accent;
+    sec.style.setProperty('--ev', opts.accent);
+    sec.style.setProperty('--bg', opts.paper || PAPER);
+    sec.appendChild(particles(opts.particles));
+    var wrap = el('div', 'art-wrap');
+    wrap.innerHTML =
+      '<div class="m-view">' +
+        '<img class="m-img" src="' + opts.img + '" alt="' + esc(opts.alt) + '" loading="' + (opts.eager ? 'eager' : 'lazy') + '" width="1000" height="1600">' +
+        '<div class="m-actions">' + opts.actions + '</div>' +
+      '</div>' +
+      '<div class="d-view d-view--' + opts.key + '">' + deskLayout(opts.key, opts.actions) + '</div>';
+    sec.appendChild(wrap);
+    if (opts.next) sec.insertAdjacentHTML('beforeend', opts.next);
+    return sec;
+  }
+
+  function nextCue(next) {
+    return next
+      ? '<button class="scroll-cue scroll-cue--next" type="button" data-next="' + next.id + '">' + esc(next.tab) + ' <span aria-hidden="true">↓</span></button>'
+      : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>';
+  }
+
   function welcomeSection(list) {
-    var sec = el('section', 'panel panel--welcome');
-    sec.id = 'ev-welcome';
-    sec.dataset.key = 'welcome';
-    sec.dataset.tab = 'Welcome';
-    sec.dataset.accent = '#c96f7d';
     var names = list.map(function (e) { return e.tab; });
     var invited = names.length > 1
       ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]
       : names[0];
-    sec.innerHTML =
-      '<div class="welcome">' +
-        '<p class="welcome__hi">Hello ' + esc(guest.name) + '!</p>' +
-        '<div class="welcome__flower" aria-hidden="true">✿</div>' +
-        '<p class="welcome__lead">Shah and Gujarathi families invite you to<br>join us as we celebrate</p>' +
-        '<div class="welcome__couple">' +
-          '<div class="person">' +
-            '<h2 class="display person__name">Ishita</h2>' +
-            '<p class="person__line">Granddaughter of Lt. Narayan &amp; Lt. Shanta Arolkar<br>and Shri. Kirit &amp; Smt. Nayana Shah</p>' +
-            '<p class="person__parents">Daughter of Mr. Nilesh<br>and Mrs. Suchitra Shah</p>' +
-          '</div>' +
-          '<div class="ornament ornament--v" aria-hidden="true"><span></span><i>❀</i><span></span></div>' +
-          '<div class="person">' +
-            '<h2 class="display person__name">Sarvesh</h2>' +
-            '<p class="person__line">Grandson of Shri. Chintamani &amp; Lt. Chitra Rahatekar<br>and Lt. Chotalal &amp; Smt. Prabha Gujarathi</p>' +
-            '<p class="person__parents">Son of Lt. Manish<br>and Mrs. Neha Gujarathi</p>' +
-          '</div>' +
-        '</div>' +
-        '<p class="welcome__invited">We’d love you with us for <strong>' + esc(invited) + '</strong>.</p>' +
-        (list[0] ? '<button class="scroll-cue" type="button" data-next="' + list[0].id + '">Scroll to begin <span aria-hidden="true">↓</span></button>' : '') +
-      '</div>';
-    sec.appendChild(particles('petal'));
-    return sec;
+    return artPanel({
+      key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
+      img: 'assets/invite/family.jpg', eager: true, particles: 'petal',
+      alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
+      actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
+        'We’d love you with us for ' + esc(invited) + '.</p>',
+      next: nextCue(list[0])
+    });
   }
 
   function eventSection(ev, i, list) {
-    var place = PLACES[ev.place];
-    var next = list[i + 1];
-    var sec = el('section', 'panel panel--event panel--' + ev.id);
-    sec.id = 'ev-' + ev.id;
-    sec.dataset.key = ev.id;
-    sec.dataset.tab = ev.tab;
-    sec.dataset.accent = ev.accent;
-    sec.style.setProperty('--ev', ev.accent);
-
-    var times = ev.times.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('');
-    var sw = ev.wardrobe
-      ? '<div class="dress"><span class="dress__label">' + esc(ev.wardrobe.shade) + '</span>' +
-          '<span class="swatches">' + ev.wardrobe.swatches.map(function (c) {
-            return '<i style="--c:' + c + '"></i>';
-          }).join('') + '</span></div>'
-      : '';
-
-    sec.innerHTML =
-      '<div class="event">' +
-        '<div class="event__art">' +
-          '<div class="card"><img src="' + ev.card + '" alt="' + esc(ev.cardAlt) + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '" width="1000" height="1600"></div>' +
-        '</div>' +
-        '<div class="event__info">' +
-          '<p class="eyebrow">' + esc(ev.tab) + ' · ' + (i + 1) + ' of ' + list.length + '</p>' +
-          '<h2 class="display event__title">' + esc(ev.title) + '</h2>' +
-          '<p class="event__kicker">' + esc(ev.kicker) + '</p>' +
-          '<div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>' +
-          '<p class="event__date">' + esc(ev.date) + ' <em>' + esc(ev.day) + '</em></p>' +
-          '<p class="event__time">' + times + '</p>' +
-          '<a class="event__venue" href="' + place.url + '" target="_blank" rel="noopener">' +
-            esc(place.name) + ', ' + esc(place.area) + ' <span aria-hidden="true">↗</span></a>' +
-          sw +
-          '<div class="event__actions">' +
-            '<button class="btn btn--primary" type="button" data-wardrobe="' + ev.id + '">Wardrobe planner</button>' +
-            '<a class="btn btn--ghost" href="' + place.url + '" target="_blank" rel="noopener">Directions</a>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      (next
-        ? '<button class="scroll-cue scroll-cue--next" type="button" data-next="' + next.id + '">Next: ' + esc(next.tab) + ' <span aria-hidden="true">↓</span></button>'
-        : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>');
-    sec.appendChild(particles(ev.particles));
-    return sec;
+    return artPanel({
+      key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
+      paper: ev.paper, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
+      actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
+        '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
+      next: nextCue(list[i + 1])
+    });
   }
 
   function outroSection() {
@@ -334,22 +370,16 @@
     sec.dataset.key = 'end';
     sec.dataset.tab = 'See you';
     sec.dataset.accent = '#8e9f72';
-    var stay = guest.resort && PLACES[guest.resort];
     sec.innerHTML =
       '<div class="outro">' +
-        '<p class="eyebrow">See you in Mulshi</p>' +
         '<h2 class="display outro__title">1+1=3</h2>' +
-        '<p class="outro__text">' +
-          (stay ? 'You’re staying at <strong>' + esc(stay.name) + '</strong>. ' : '') +
-          'Find your way around on the map, or kill some time with a quick word game.</p>' +
+        '<p class="outro__text">See you in Mulshi</p>' +
         '<div class="event__actions event__actions--center">' +
-          '<a class="btn btn--primary" href="#stay">Where am I staying?</a>' +
-          '<a class="btn btn--ghost" href="#tinker">Play Shaadi Scramble</a>' +
+          '<a class="btn btn--primary" href="#stay">Stay</a>' +
+          '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
-        '<p class="outro__out">Not ' + esc(guest.name) + '? <button type="button" class="linkish" id="sign-out">Sign out</button></p>' +
       '</div>';
     sec.appendChild(particles('heart'));
-    sec.querySelector('#sign-out').addEventListener('click', signOut);
     return sec;
   }
 
@@ -399,62 +429,10 @@
   /* ---------- Stay + map ---------- */
 
   function buildStay() {
-    var card = $('#stay-card');
     var mine = guest.resort && PLACES[guest.resort];
-    if (mine) {
-      card.innerHTML =
-        '<p class="stay-card__label">You’re staying at</p>' +
-        '<p class="display stay-card__place">' + esc(mine.name) + '</p>' +
-        '<p class="stay-card__area">' + esc(mine.area) + '</p>' +
-        '<a class="btn btn--primary" href="' + mine.url + '" target="_blank" rel="noopener">Directions to your stay ↗</a>';
-    } else {
-      card.innerHTML =
-        '<p class="stay-card__label">Coming for the day?</p>' +
-        '<p class="stay-card__area">We haven’t got a room down for you. Here’s how to reach the venues. If you’re meant to be staying over, let Ishita or Sarvesh know.</p>';
-    }
-
-    var spots = $('#map-spots');
-    spots.innerHTML = '';
-    Object.keys(PLACES).forEach(function (k) {
-      var p = PLACES[k];
-      var a = el('a', 'spot' + (k === guest.resort ? ' spot--mine' : ''));
-      a.href = p.url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.setAttribute('aria-label', 'Directions to ' + p.name);
-      a.style.left = p.spot[0] + '%';
-      a.style.top = p.spot[1] + '%';
-      a.style.width = p.spot[2] + '%';
-      a.style.height = p.spot[3] + '%';
-      spots.appendChild(a);
-
-      var pin = el('span', 'pin' + (k === guest.resort ? ' pin--mine' : ''));
-      pin.setAttribute('aria-hidden', 'true');
-      pin.style.left = p.pin[0] + '%';
-      pin.style.top = p.pin[1] + '%';
-      if (k === guest.resort) pin.innerHTML = '<b>You’re here</b>';
-      spots.appendChild(pin);
-    });
-
-    var places = $('#places');
-    places.innerHTML = '';
-    var mineEvents = myEvents();
-    ['P', 'G', 'A'].forEach(function (k) {
-      var p = PLACES[k];
-      var here = mineEvents.filter(function (e) { return e.place === k; });
-      var item = el('a', 'place' + (k === guest.resort ? ' place--mine' : ''));
-      item.href = p.url;
-      item.target = '_blank';
-      item.rel = 'noopener';
-      var what = [];
-      if (k === guest.resort) what.push('Your stay');
-      here.forEach(function (e) { what.push(e.tab + ' · ' + e.date.replace(' December', ' Dec')); });
-      item.innerHTML =
-        '<span class="place__name">' + esc(p.name) + '</span>' +
-        '<span class="place__what">' + (what.length ? what.map(esc).join('<br>') : 'Stay for some of our guests') + '</span>' +
-        '<span class="place__go">Directions ↗</span>';
-      places.appendChild(item);
-    });
+    $('#stay-title').textContent = mine ? mine.name : 'Getting there';
+    $('#stay-line').textContent = mine ? 'Your stay' : 'Find your way to the celebrations';
+    WeddingMap.mount($('#map'), $('#map-panel'), { events: myEvents(), resort: guest.resort });
   }
 
   /* ---------- Boot ---------- */

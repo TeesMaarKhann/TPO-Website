@@ -5,15 +5,27 @@ Usage:
     1. In Google Sheets open the "Daywise List | RSVP" tab and choose
        File > Download > Comma-separated values (.csv).
     2. python3 tools/build_guests.py path/to/daywise.csv
+    3. Delete the CSV. Never commit it.
 
-Only salted hashes of names and phone numbers are written to js/guests.js,
-so the raw guest list is never published with the site. Do not commit the
-CSV itself.
+How guests are stored
+---------------------
+js/guests.js holds no names or phone numbers. Each guest becomes a key made
+from their name AND phone number together, run through PBKDF2-SHA256 with
+many iterations. To log in, a guest types both; the browser makes the same
+key and looks it up. Recovering a number from the file means guessing the
+exact name and then trying billions of numbers, each one deliberately slow.
 
-The sheet is split into blocks. Each block starts with a title row whose
-second cell ends in "| HSWC", "| HSW", "| WC" or "| W" (the events that
-block is invited to: Haldi, Sangeet, Wedding, Cocktail). Inside a block,
-column A is the name, column E the phone and column F the resort.
+Sheet layout
+------------
+The tab is split into blocks. Each block starts with a title row whose second
+cell ends in "| HSWC", "| HSW", "| WC" or "| W" (the events that block is
+invited to: Haldi, Sangeet, Wedding, Cocktail). Inside a block: column A is
+the name, E the phone, F the resort, G the household contact (POC).
+
+Guests with no number of their own (e.g. "Kushal Shah Wife") use their
+household's number: the number on the nearest row above them that starts a
+household (a row with its own phone, or with the POC column filled).
+Everyone can also log in with that household number.
 """
 import csv
 import hashlib
@@ -21,25 +33,42 @@ import json
 import re
 import secrets
 import sys
+from multiprocessing import Pool
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "js" / "guests.js"
 
+# Must match ITERATIONS in js/app.js (it is written into guests.js).
+ITERATIONS = 600_000
+
 RESORTS = {"palmwood": "P", "palmwoods": "P", "golden fields": "G",
            "amour": "A", "amor": "A", "amora": "A"}
 
+# Words that never count as someone's first name.
+NOT_NAMES = {"wife", "husband", "mother", "father", "son", "daughter",
+             "family", "mr", "mrs", "ms", "dr"}
 
-def norm_name(name):
-    """Lowercase, drop brackets and 'xx_' prefixes, sort the words.
 
-    Sorting lets "Dhekne Dilip" and "Dilip Dhekne" match. Must stay in step
-    with normName() in js/app.js.
-    """
+def words(name):
+    """Lowercase words of a name, without brackets or 'xx_' prefixes."""
     name = re.sub(r"\(.*?\)", " ", name.lower())
     name = re.sub(r"^\w+_\s*", "", name.strip())
-    words = re.findall(r"[a-z]+", name)
-    return " ".join(sorted(words))
+    return re.findall(r"[a-z]+", name)
+
+
+def name_keys(name):
+    """The full name (word order ignored) and the first name on its own.
+
+    Must stay in step with nameKeys() in js/app.js.
+    """
+    w = words(name)
+    keys = []
+    if w:
+        keys.append(" ".join(sorted(w)))
+        if len(w) > 1 and len(w[0]) > 1 and w[0] not in NOT_NAMES:
+            keys.append(w[0])
+    return keys
 
 
 def norm_phone(phone):
@@ -48,51 +77,69 @@ def norm_phone(phone):
     return digits[-10:] if len(digits) >= 8 else ""
 
 
-def h(salt, kind, value):
-    return hashlib.sha256(f"{salt}|{kind}:{value}".encode()).hexdigest()[:16]
+def derive(args):
+    salt, name, phone = args
+    raw = hashlib.pbkdf2_hmac("sha256", f"{name}|{phone}".encode(),
+                              salt.encode(), ITERATIONS, dklen=12)
+    return raw.hex()
 
 
-def merge(table, key, events, resort):
-    old = table.get(key)
-    if old:
-        ev = "".join(e for e in "HSWC" if e in old[0] or e in events)
-        table[key] = [ev, old[1] or resort]
-    else:
-        table[key] = [events, resort]
-
-
-def main(csv_path):
-    salt = secrets.token_hex(8)
-    names, phones = {}, {}
+def read_rows(csv_path):
+    """Yield (events, name, phone, household_phone, resort) per guest."""
     events = None
-    count = 0
+    household = ""
     with open(csv_path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
             row += [""] * (8 - len(row))
-            title = row[1].strip()
-            m = re.search(r"\|\s*([HSWC]+)\s*$", title)
+            m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
             if m and not row[0].strip():
-                events = m.group(1)
+                events, household = m.group(1), ""
                 continue
             person = row[0].strip()
             if not events or not person or person == "Person":
                 continue
-            resort = RESORTS.get(row[5].strip().lower(), "")
-            n = norm_name(person)
-            if n:
-                merge(names, h(salt, "n", n), events, resort)
-            p = norm_phone(row[4])
-            if p:
-                merge(phones, h(salt, "p", p), events, resort)
-            count += 1
+            phone = norm_phone(row[4])
+            if phone or row[6].strip():
+                household = phone          # this row starts a household
+            yield events, person, phone, household, RESORTS.get(row[5].strip().lower(), "")
 
-    data = {"salt": salt, "n": names, "p": phones}
+
+def main(csv_path):
+    salt = secrets.token_hex(8)
+    entries = {}          # (name_key, phone) -> [events, resort]
+    no_number = []
+    count = 0
+    for events, person, phone, household, resort in read_rows(csv_path):
+        count += 1
+        phones = {p for p in (phone, household) if p}
+        if not phones:
+            no_number.append(person)
+        for n in name_keys(person):
+            for p in phones:
+                old = entries.get((n, p))
+                if old:
+                    ev = "".join(e for e in "HSWC" if e in old[0] or e in events)
+                    entries[(n, p)] = [ev, old[1] or resort]
+                else:
+                    entries[(n, p)] = [events, resort]
+
+    pairs = list(entries)
+    print(f"Scrambling {len(pairs)} name+phone keys (takes a few minutes)...")
+    with Pool() as pool:
+        keys = pool.map(derive, [(salt, n, p) for n, p in pairs], chunksize=8)
+
+    data = {"salt": salt, "iter": ITERATIONS,
+            "g": {k: entries[pair] for k, pair in sorted(zip(keys, pairs))}}
     OUT.write_text(
         "// Generated by tools/build_guests.py. Do not edit by hand.\n"
         "window.GUESTS = " + json.dumps(data, separators=(",", ":")) + ";\n",
         encoding="utf-8")
-    print(f"{count} guests -> {OUT.relative_to(ROOT)} "
-          f"({len(names)} names, {len(phones)} phones)")
+    print(f"{count} guests -> {OUT.relative_to(ROOT)}")
+    if no_number:
+        print(f"\n{len(no_number)} guests can't log in yet because neither they nor "
+              "their household have a phone number in the sheet:")
+        for p in no_number:
+            print("  -", p)
 
 
 if __name__ == "__main__":

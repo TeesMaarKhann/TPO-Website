@@ -7,7 +7,7 @@
   <meta name="description" content="Ishita & Sarvesh are getting married in Mulshi, 9th to 11th December.">
   <meta name="theme-color" content="#f3efe6">
   <meta name="robots" content="noindex">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f3efe6' stroke='%23c8a24a' stroke-width='3'/%3E%3Ctext x='32' y='42' font-family='Georgia' font-size='26' text-anchor='middle' fill='%235b6b86'%3EIS%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="assets/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -45,13 +45,9 @@
   <!-- 2–4. The site after a guest is found -->
   <div id="app" class="app" hidden>
     <header class="topbar">
-      <a class="brand" href="#events" data-nav="events" aria-label="Back to events">
-        <span class="brand__mono">IS</span>
-        <span class="brand__name">Ishita &amp; Sarvesh</span>
-      </a>
-      <nav class="tabs" id="tabs" aria-label="Events"></nav>
+      <a class="topbar__names" href="#events" data-nav="events"><img src="assets/names.png" alt="Ishita &amp; Sarvesh" width="904" height="110"></a>
+      <a class="brand__mono" href="#events" data-nav="events" aria-label="Events"><img src="assets/logo.png" alt="" width="270" height="270"></a>
       <nav class="pages" aria-label="Pages">
-        <a href="#events" data-nav="events">Events</a>
         <a href="#stay" data-nav="stay">Stay</a>
         <a href="#tinker" data-nav="tinker">Tinker</a>
       </nav>
@@ -60,22 +56,18 @@
     <main>
       <section id="view-events" class="view view--events" aria-label="Events">
         <div id="scroller" class="scroller"></div>
-        <ol id="dots" class="dots" aria-hidden="true"></ol>
+        <nav aria-label="Events"><ol id="dots" class="dots"></ol></nav>
       </section>
 
       <section id="view-stay" class="view view--page" aria-labelledby="stay-title" hidden>
         <div class="page">
-          <p class="eyebrow">Getting there</p>
-          <h2 id="stay-title" class="display page__title">Where are you staying?</h2>
-          <div id="stay-card" class="stay-card"></div>
-          <figure class="map">
-            <div class="map__frame">
-              <img src="assets/map.jpg" alt="Illustrated wedding route map showing Amora Resort, Golden Fields and Palmwoods" width="1024" height="765">
-              <div id="map-spots"></div>
-            </div>
-            <figcaption>Tap a place on the map for directions.</figcaption>
-          </figure>
-          <div id="places" class="places"></div>
+          <h2 id="stay-title" class="display page__title">Getting there</h2>
+          <p id="stay-line" class="stay-line"></p>
+          <div class="mapbox">
+            <div id="map" class="mapbox__map"></div>
+            <div id="map-panel" class="map-card" aria-live="polite"></div>
+          </div>
+          <p class="mapbox__hint">Tap a place on the map</p>
         </div>
       </section>
 
@@ -99,8 +91,8 @@
   </dialog>
 
   <script src="js/guests.js"></script>
-  <script src="js/sha256.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/map.js"></script>
   <script src="js/tinker.js"></script>
   <script src="js/app.js"></script>
 </body>
