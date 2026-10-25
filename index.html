@@ -45,13 +45,9 @@
   <!-- 2–4. The site after a guest is found -->
   <div id="app" class="app" hidden>
     <header class="topbar">
-      <a class="brand" href="#events" data-nav="events" aria-label="Back to events">
-        <span class="brand__mono">IS</span>
-        <span class="brand__name">Ishita &amp; Sarvesh</span>
-      </a>
-      <nav class="tabs" id="tabs" aria-label="Events"></nav>
+      <span class="topbar__names">Ishita &amp; Sarvesh</span>
+      <a class="brand__mono" href="#events" data-nav="events" aria-label="Events">IS</a>
       <nav class="pages" aria-label="Pages">
-        <a href="#events" data-nav="events">Events</a>
         <a href="#stay" data-nav="stay">Stay</a>
         <a href="#tinker" data-nav="tinker">Tinker</a>
       </nav>
@@ -60,7 +56,7 @@
     <main>
       <section id="view-events" class="view view--events" aria-label="Events">
         <div id="scroller" class="scroller"></div>
-        <ol id="dots" class="dots" aria-hidden="true"></ol>
+        <nav aria-label="Events"><ol id="dots" class="dots"></ol></nav>
       </section>
 
       <section id="view-stay" class="view view--page" aria-labelledby="stay-title" hidden>

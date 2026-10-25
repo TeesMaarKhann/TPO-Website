@@ -143,6 +143,7 @@
 
   function route() {
     var page = (location.hash || '#events').slice(1);
+    if (page === 'signout') return signOut();  // handy for testing: open #signout
     if (['events', 'stay', 'tinker'].indexOf(page) < 0 && !$('#ev-' + page)) page = 'events';
     var isEvent = !!$('#ev-' + page);
     var view = isEvent ? 'events' : page;
@@ -170,9 +171,8 @@
 
   function buildEvents() {
     var scroller = $('#scroller');
-    var tabs = $('#tabs');
     var dots = $('#dots');
-    scroller.innerHTML = tabs.innerHTML = dots.innerHTML = '';
+    scroller.innerHTML = dots.innerHTML = '';
     var list = myEvents();
 
     scroller.appendChild(welcomeSection(list));
@@ -184,22 +184,14 @@
     sections = Array.prototype.slice.call(scroller.children);
     sections.forEach(function (sec) {
       var label = sec.dataset.tab;
-      var t = el('a', 'tab', esc(label));
-      t.href = '#' + sec.dataset.key;
-      t.dataset.target = sec.dataset.key;
-      t.addEventListener('click', function (e) {
-        e.preventDefault();
-        if (location.hash !== '#events') history.replaceState(null, '', '#events');
-        route();
+      var d = el('li');
+      var b = el('button', 'dot', '<span>' + esc(label) + '</span>');
+      b.type = 'button';
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', function () {
+        if (document.body.dataset.view !== 'events') location.hash = '#events';
         goTo(sec.dataset.key, true);
       });
-      tabs.appendChild(t);
-
-      var d = el('li');
-      var b = el('button', 'dot');
-      b.type = 'button';
-      b.title = label;
-      b.addEventListener('click', function () { goTo(sec.dataset.key, true); });
       d.appendChild(b);
       dots.appendChild(d);
     });
@@ -249,13 +241,11 @@
       var on = s === sec;
       s.classList.toggle('is-active', on);
       if (on) s.classList.add('has-shown');
-      var tab = $('#tabs').children[i];
       var dot = $('#dots').children[i];
-      if (tab) {
-        tab.classList.toggle('is-active', on);
-        if (on) tab.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      if (dot) {
+        dot.firstChild.classList.toggle('is-active', on);
+        if (on) dot.firstChild.setAttribute('aria-current', 'true'); else dot.firstChild.removeAttribute('aria-current');
       }
-      if (dot) dot.firstChild.classList.toggle('is-active', on);
     });
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
   }
@@ -327,13 +317,6 @@
     sec.style.setProperty('--ev', ev.accent);
 
     var times = ev.times.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('');
-    var sw = ev.wardrobe
-      ? '<div class="dress"><span class="dress__label">' + esc(ev.wardrobe.shade) + '</span>' +
-          '<span class="swatches">' + ev.wardrobe.swatches.map(function (c) {
-            return '<i style="--c:' + c + '"></i>';
-          }).join('') + '</span></div>'
-      : '';
-
     sec.innerHTML =
       '<div class="event">' +
         '<div class="event__art">' +
@@ -348,10 +331,8 @@
           '<p class="event__time">' + times + '</p>' +
           '<a class="event__venue" href="' + place.url + '" target="_blank" rel="noopener">' +
             esc(place.name) + ', ' + esc(place.area) + ' <span aria-hidden="true">↗</span></a>' +
-          sw +
           '<div class="event__actions">' +
             '<button class="btn btn--primary" type="button" data-wardrobe="' + ev.id + '">Wardrobe planner</button>' +
-            '<a class="btn btn--ghost" href="' + place.url + '" target="_blank" rel="noopener">Directions</a>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -368,22 +349,16 @@
     sec.dataset.key = 'end';
     sec.dataset.tab = 'See you';
     sec.dataset.accent = '#8e9f72';
-    var stay = guest.resort && PLACES[guest.resort];
     sec.innerHTML =
       '<div class="outro">' +
-        '<p class="eyebrow">See you in Mulshi</p>' +
         '<h2 class="display outro__title">1+1=3</h2>' +
-        '<p class="outro__text">' +
-          (stay ? 'You’re staying at <strong>' + esc(stay.name) + '</strong>. ' : '') +
-          'Find your way around on the map, or kill some time with a quick word game.</p>' +
+        '<p class="outro__text">See you in Mulshi</p>' +
         '<div class="event__actions event__actions--center">' +
-          '<a class="btn btn--primary" href="#stay">Where am I staying?</a>' +
-          '<a class="btn btn--ghost" href="#tinker">Play Shaadi Scramble</a>' +
+          '<a class="btn btn--primary" href="#stay">Stay</a>' +
+          '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
-        '<p class="outro__out">Not ' + esc(guest.name) + '? <button type="button" class="linkish" id="sign-out">Sign out</button></p>' +
       '</div>';
     sec.appendChild(particles('heart'));
-    sec.querySelector('#sign-out').addEventListener('click', signOut);
     return sec;
   }
 
