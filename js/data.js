@@ -4,25 +4,22 @@
 window.PLACES = {
   P: {
     name: 'Palmwoods Retreat',
+    short: 'Palmwoods',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/ki4RKuw3ReaCj8aw6',
-    // Clickable area on assets/map.jpg, in % of the image (left, top, width, height)
-    spot: [63.5, 74, 26, 15.5],
-    pin: [67.4, 79]
+    url: 'https://maps.app.goo.gl/ki4RKuw3ReaCj8aw6'
   },
   G: {
     name: 'Golden Fields Resort',
+    short: 'Golden Fields',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/wQJWP2f2YCCatVbEA',
-    spot: [15, 47.5, 20, 17],
-    pin: [18.8, 59.5]
+    url: 'https://maps.app.goo.gl/wQJWP2f2YCCatVbEA'
   },
   A: {
     name: 'Amora Resort',
+    short: 'Amora',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/9heNv7naedXkmVqS8',
-    spot: [10, 5.5, 27, 13.5],
-    pin: [14, 11]
+    note: '31 min (15.5 km) from Palmwoods',
+    url: 'https://maps.app.goo.gl/9heNv7naedXkmVqS8'
   }
 };
 
@@ -32,6 +29,7 @@ window.EVENTS = [
   {
     code: 'H',
     id: 'haldi',
+    paper: '#eae9e5',
     tab: 'Haldi',
     title: 'Yello!',
     kicker: 'Haldi and Welcome Lunch to kick things off',
@@ -54,6 +52,7 @@ window.EVENTS = [
   {
     code: 'S',
     id: 'sangeet',
+    paper: '#ebe9e5',
     tab: 'Sangeet',
     title: 'Kar-de-Disco',
     kicker: 'Time to get on the dance floor!',
@@ -76,6 +75,7 @@ window.EVENTS = [
   {
     code: 'W',
     id: 'wedding',
+    paper: '#f7f3ea',
     tab: 'Wedding',
     title: 'Phera Pheri',
     kicker: '2021 – 2026 – ∞',
@@ -98,6 +98,7 @@ window.EVENTS = [
   {
     code: 'C',
     id: 'cocktail',
+    paper: '#f6f2e9',
     tab: 'Cocktail',
     title: 'Toast & Tonic',
     kicker: 'Raise a glass to the newlyweds',

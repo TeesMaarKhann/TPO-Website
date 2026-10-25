@@ -158,7 +158,13 @@
       else a.removeAttribute('aria-current');
     });
     if (isEvent) goTo(page, false);
-    if (view !== 'events') window.scrollTo(0, 0);
+    if (view !== 'events') {
+      window.scrollTo(0, 0);
+      document.body.style.setProperty('--page', PAPER);
+    } else {
+      var act = document.querySelector('.panel.is-active');
+      if (act) document.body.style.setProperty('--page', act.style.getPropertyValue('--bg') || PAPER);
+    }
   }
 
   /* ---------- Events scroller ---------- */
@@ -248,6 +254,7 @@
       }
     });
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
+    document.body.style.setProperty('--page', sec.style.getPropertyValue('--bg') || PAPER);
   }
 
   function goTo(key, smooth) {
@@ -271,76 +278,69 @@
     return wrap;
   }
 
+  // Paper colour of each invite, so the page around the artwork matches it.
+  var PAPER = '#ebe9e5';
+
+  function artPanel(opts) {
+    var sec = el('section', 'panel panel--art ' + opts.cls);
+    sec.id = 'ev-' + opts.key;
+    sec.dataset.key = opts.key;
+    sec.dataset.tab = opts.tab;
+    sec.dataset.accent = opts.accent;
+    sec.style.setProperty('--ev', opts.accent);
+    sec.style.setProperty('--bg', opts.paper || PAPER);
+    sec.innerHTML =
+      '<div class="event">' +
+        '<div class="event__art">' +
+          '<div class="card"><img src="' + opts.img + '" alt="' + esc(opts.alt) + '" loading="' + (opts.eager ? 'eager' : 'lazy') + '" width="1000" height="1600"></div>' +
+        '</div>' +
+        '<div class="event__info">' + (opts.info || '') +
+          '<div class="event__actions">' + opts.actions + '</div>' +
+        '</div>' +
+      '</div>' +
+      (opts.next || '');
+    sec.appendChild(particles(opts.particles));
+    return sec;
+  }
+
+  function nextCue(next) {
+    return next
+      ? '<button class="scroll-cue scroll-cue--next" type="button" data-next="' + next.id + '">' + esc(next.tab) + ' <span aria-hidden="true">↓</span></button>'
+      : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>';
+  }
+
   function welcomeSection(list) {
-    var sec = el('section', 'panel panel--welcome');
-    sec.id = 'ev-welcome';
-    sec.dataset.key = 'welcome';
-    sec.dataset.tab = 'Welcome';
-    sec.dataset.accent = '#c96f7d';
     var names = list.map(function (e) { return e.tab; });
     var invited = names.length > 1
       ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]
       : names[0];
-    sec.innerHTML =
-      '<div class="welcome">' +
-        '<p class="welcome__hi">Hello ' + esc(guest.name) + '!</p>' +
-        '<div class="welcome__flower" aria-hidden="true">✿</div>' +
-        '<p class="welcome__lead">Shah and Gujarathi families invite you to<br>join us as we celebrate</p>' +
-        '<div class="welcome__couple">' +
-          '<div class="person">' +
-            '<h2 class="display person__name">Ishita</h2>' +
-            '<p class="person__line">Granddaughter of Lt. Narayan &amp; Lt. Shanta Arolkar<br>and Shri. Kirit &amp; Smt. Nayana Shah</p>' +
-            '<p class="person__parents">Daughter of Mr. Nilesh<br>and Mrs. Suchitra Shah</p>' +
-          '</div>' +
-          '<div class="ornament ornament--v" aria-hidden="true"><span></span><i>❀</i><span></span></div>' +
-          '<div class="person">' +
-            '<h2 class="display person__name">Sarvesh</h2>' +
-            '<p class="person__line">Grandson of Shri. Chintamani &amp; Lt. Chitra Rahatekar<br>and Lt. Chotalal &amp; Smt. Prabha Gujarathi</p>' +
-            '<p class="person__parents">Son of Lt. Manish<br>and Mrs. Neha Gujarathi</p>' +
-          '</div>' +
-        '</div>' +
-        '<p class="welcome__invited">We’d love you with us for <strong>' + esc(invited) + '</strong>.</p>' +
-        (list[0] ? '<button class="scroll-cue" type="button" data-next="' + list[0].id + '">Scroll to begin <span aria-hidden="true">↓</span></button>' : '') +
-      '</div>';
-    sec.appendChild(particles('petal'));
-    return sec;
+    return artPanel({
+      key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
+      img: 'assets/invite/family.jpg', eager: true, particles: 'petal',
+      alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
+      actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
+        'We’d love you with us for ' + esc(invited) + '.</p>',
+      next: nextCue(list[0])
+    });
   }
 
   function eventSection(ev, i, list) {
     var place = PLACES[ev.place];
-    var next = list[i + 1];
-    var sec = el('section', 'panel panel--event panel--' + ev.id);
-    sec.id = 'ev-' + ev.id;
-    sec.dataset.key = ev.id;
-    sec.dataset.tab = ev.tab;
-    sec.dataset.accent = ev.accent;
-    sec.style.setProperty('--ev', ev.accent);
-
     var times = ev.times.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('');
-    sec.innerHTML =
-      '<div class="event">' +
-        '<div class="event__art">' +
-          '<div class="card"><img src="' + ev.card + '" alt="' + esc(ev.cardAlt) + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '" width="1000" height="1600"></div>' +
-        '</div>' +
-        '<div class="event__info">' +
-          '<p class="eyebrow">' + esc(ev.tab) + ' · ' + (i + 1) + ' of ' + list.length + '</p>' +
-          '<h2 class="display event__title">' + esc(ev.title) + '</h2>' +
-          '<p class="event__kicker">' + esc(ev.kicker) + '</p>' +
-          '<div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>' +
-          '<p class="event__date">' + esc(ev.date) + ' <em>' + esc(ev.day) + '</em></p>' +
-          '<p class="event__time">' + times + '</p>' +
-          '<a class="event__venue" href="' + place.url + '" target="_blank" rel="noopener">' +
-            esc(place.name) + ', ' + esc(place.area) + ' <span aria-hidden="true">↗</span></a>' +
-          '<div class="event__actions">' +
-            '<button class="btn btn--primary" type="button" data-wardrobe="' + ev.id + '">Wardrobe planner</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      (next
-        ? '<button class="scroll-cue scroll-cue--next" type="button" data-next="' + next.id + '">Next: ' + esc(next.tab) + ' <span aria-hidden="true">↓</span></button>'
-        : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>');
-    sec.appendChild(particles(ev.particles));
-    return sec;
+    return artPanel({
+      key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
+      paper: ev.paper, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
+      info:
+        '<h2 class="display event__title">' + esc(ev.title) + '</h2>' +
+        '<p class="event__kicker">' + esc(ev.kicker) + '</p>' +
+        '<div class="ornament" aria-hidden="true"><span></span><i>✦</i><span></span></div>' +
+        '<p class="event__date">' + esc(ev.date) + ' <em>' + esc(ev.day) + '</em></p>' +
+        '<p class="event__time">' + times + '</p>' +
+        '<p class="event__venue">' + esc(place.name) + ', ' + esc(place.area) + '</p>',
+      actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
+        '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
+      next: nextCue(list[i + 1])
+    });
   }
 
   function outroSection() {
@@ -408,62 +408,11 @@
   /* ---------- Stay + map ---------- */
 
   function buildStay() {
-    var card = $('#stay-card');
     var mine = guest.resort && PLACES[guest.resort];
-    if (mine) {
-      card.innerHTML =
-        '<p class="stay-card__label">You’re staying at</p>' +
-        '<p class="display stay-card__place">' + esc(mine.name) + '</p>' +
-        '<p class="stay-card__area">' + esc(mine.area) + '</p>' +
-        '<a class="btn btn--primary" href="' + mine.url + '" target="_blank" rel="noopener">Directions to your stay ↗</a>';
-    } else {
-      card.innerHTML =
-        '<p class="stay-card__label">Coming for the day?</p>' +
-        '<p class="stay-card__area">We haven’t got a room down for you. Here’s how to reach the venues. If you’re meant to be staying over, let Ishita or Sarvesh know.</p>';
-    }
-
-    var spots = $('#map-spots');
-    spots.innerHTML = '';
-    Object.keys(PLACES).forEach(function (k) {
-      var p = PLACES[k];
-      var a = el('a', 'spot' + (k === guest.resort ? ' spot--mine' : ''));
-      a.href = p.url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.setAttribute('aria-label', 'Directions to ' + p.name);
-      a.style.left = p.spot[0] + '%';
-      a.style.top = p.spot[1] + '%';
-      a.style.width = p.spot[2] + '%';
-      a.style.height = p.spot[3] + '%';
-      spots.appendChild(a);
-
-      var pin = el('span', 'pin' + (k === guest.resort ? ' pin--mine' : ''));
-      pin.setAttribute('aria-hidden', 'true');
-      pin.style.left = p.pin[0] + '%';
-      pin.style.top = p.pin[1] + '%';
-      if (k === guest.resort) pin.innerHTML = '<b>You’re here</b>';
-      spots.appendChild(pin);
-    });
-
-    var places = $('#places');
-    places.innerHTML = '';
-    var mineEvents = myEvents();
-    ['P', 'G', 'A'].forEach(function (k) {
-      var p = PLACES[k];
-      var here = mineEvents.filter(function (e) { return e.place === k; });
-      var item = el('a', 'place' + (k === guest.resort ? ' place--mine' : ''));
-      item.href = p.url;
-      item.target = '_blank';
-      item.rel = 'noopener';
-      var what = [];
-      if (k === guest.resort) what.push('Your stay');
-      here.forEach(function (e) { what.push(e.tab + ' · ' + e.date.replace(' December', ' Dec')); });
-      item.innerHTML =
-        '<span class="place__name">' + esc(p.name) + '</span>' +
-        '<span class="place__what">' + (what.length ? what.map(esc).join('<br>') : 'Stay for some of our guests') + '</span>' +
-        '<span class="place__go">Directions ↗</span>';
-      places.appendChild(item);
-    });
+    $('#stay-line').innerHTML = mine
+      ? 'You’re staying at <strong>' + esc(mine.name) + '</strong>'
+      : 'Coming for the day? Here’s how to find the venues.';
+    WeddingMap.mount($('#map'), $('#map-panel'), { events: myEvents(), resort: guest.resort });
   }
 
   /* ---------- Boot ---------- */
