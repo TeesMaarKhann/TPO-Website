@@ -39,7 +39,7 @@ window.EVENTS = [
     card: 'assets/invite/haldi.jpg',
     cardAlt: 'Illustrated invite: Yello! Haldi and Welcome Lunch, 9th December, 11 am onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c9a227',
-    particles: 'petal',
+    particles: 'haldi',
     wardrobe: {
       image: 'assets/wardrobe/haldi.jpg',
       name: 'Haldi',
@@ -85,7 +85,7 @@ window.EVENTS = [
     card: 'assets/invite/wedding.jpg',
     cardAlt: 'Illustrated invite: Phera Pheri. 10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.',
     accent: '#c96f6a',
-    particles: 'heart',
+    particles: 'marigold',
     wardrobe: {
       image: 'assets/wardrobe/wedding.jpg',
       name: 'Phera-Pheri',
@@ -108,7 +108,7 @@ window.EVENTS = [
     card: 'assets/invite/cocktail.jpg',
     cardAlt: 'Illustrated invite: Toast & Tonic. 10th December, 5:30pm onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c47f6e',
-    particles: 'bubble',
+    particles: 'bulb',
     // No wardrobe page yet. Add one like the others when it's ready.
     wardrobe: null
   }

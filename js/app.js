@@ -2,6 +2,9 @@
   'use strict';
 
   var STORE_KEY = 'is-wedding-guest-v1';
+  // What the guest typed, kept on their own device so they never have to type
+  // it again, even after the guest list is rebuilt.
+  var LOGIN_KEY = 'is-wedding-login-v1';
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var guest = null;
 
@@ -68,14 +71,19 @@
     }, Promise.resolve(null));
   }
 
-  function save(g) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(g)); } catch (e) { /* private mode */ }
+  function save(g, name, phone) {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(g));
+      if (name && phone) localStorage.setItem(LOGIN_KEY, JSON.stringify({ name: name, phone: phone }));
+    } catch (e) { /* private mode */ }
+    // Ask the browser not to clear this site's storage when space runs low.
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* ignore */ }
   }
-  function load() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return null; }
+  function load(key) {
+    try { return JSON.parse(localStorage.getItem(key || STORE_KEY) || 'null'); } catch (e) { return null; }
   }
   function signOut() {
-    try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem(STORE_KEY); localStorage.removeItem(LOGIN_KEY); } catch (e) { /* ignore */ }
     location.hash = '';
     location.reload();
   }
@@ -103,8 +111,7 @@
         if (!match) {
           return showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
         }
-        guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
-        save(guest);
+        login(name, phone, match);
         enter(true);
       });
     });
@@ -118,16 +125,27 @@
     }
   }
 
+  function login(name, phone, match) {
+    guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+    save(guest, name, phone);
+  }
+
   function firstName(name) {
     var w = name.trim().split(/\s+/)[0] || '';
     return w.charAt(0).toUpperCase() + w.slice(1);
   }
 
+  // Guests invited to the wedding alone don't get the Stay page.
+  function hasStay() {
+    return /[HSC]/.test(guest.events);
+  }
+
   function enter(animate) {
     var gate = $('#gate');
     var app = $('#app');
+    document.querySelectorAll('[data-nav=stay]').forEach(function (a) { a.hidden = !hasStay(); });
     buildEvents();
-    buildStay();
+    if (hasStay()) buildStay();
     window.Tinker.mount($('#game'));
     app.hidden = false;
     if (animate && !reduceMotion) {
@@ -145,6 +163,7 @@
     var page = (location.hash || '#events').slice(1);
     if (page === 'signout') return signOut();  // handy for testing: open #signout
     if (['events', 'stay', 'tinker'].indexOf(page) < 0 && !$('#ev-' + page)) page = 'events';
+    if (page === 'stay' && !hasStay()) page = 'events';
     var isEvent = !!$('#ev-' + page);
     var view = isEvent ? 'events' : page;
 
@@ -263,16 +282,33 @@
     sec.scrollIntoView({ behavior: smooth && !reduceMotion ? 'smooth' : 'auto', block: 'start' });
   }
 
+  // The pieces that float up behind each panel are the small motifs from the
+  // invites' own backgrounds (assets/motifs, cut by tools/cut_motifs.py).
+  // [file, smallest size, largest size in px]
+  var MOTIFS = {
+    flower:   [['flower', 14, 24]],
+    haldi:    [['flower2', 14, 24]],
+    sparkle:  [['sparkle', 14, 26], ['sparkle2', 12, 22]],
+    marigold: [['marigold.svg', 24, 44], ['leaf.svg', 16, 30]],
+    bulb:     [['bulb', 16, 30]],
+    mix:      [['flower', 14, 22], ['sparkle', 14, 22], ['marigold.svg', 20, 34], ['bulb', 16, 26]]
+  };
+
   function particles(kind) {
+    var set = MOTIFS[kind] || MOTIFS.flower;
     var wrap = el('div', 'particles particles--' + kind);
     wrap.setAttribute('aria-hidden', 'true');
-    for (var i = 0; i < 12; i++) {
+    for (var i = 0; i < 14; i++) {
+      var m = set[i % set.length];
+      var file = m[0].indexOf('.') < 0 ? m[0] + '.webp' : m[0];
       var p = el('span');
-      p.style.left = (4 + Math.random() * 92) + '%';
-      p.style.animationDelay = (Math.random() * 5).toFixed(2) + 's';
-      p.style.animationDuration = (6 + Math.random() * 6).toFixed(2) + 's';
-      p.style.setProperty('--s', (0.6 + Math.random() * 0.8).toFixed(2));
+      p.style.backgroundImage = 'url(assets/motifs/' + file + ')';
+      p.style.left = (2 + Math.random() * 94) + '%';
+      p.style.animationDelay = (-Math.random() * 12).toFixed(2) + 's';
+      p.style.animationDuration = (9 + Math.random() * 7).toFixed(2) + 's';
+      p.style.setProperty('--size', Math.round(m[1] + Math.random() * (m[2] - m[1])) + 'px');
       p.style.setProperty('--drift', (Math.random() * 60 - 30).toFixed(0) + 'px');
+      p.style.setProperty('--spin', (Math.random() < .5 ? -1 : 1) * Math.round(90 + Math.random() * 180) + 'deg');
       wrap.appendChild(p);
     }
     return wrap;
@@ -346,7 +382,7 @@
       : names[0];
     return artPanel({
       key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
-      img: 'assets/invite/family.jpg', eager: true, particles: 'petal',
+      img: 'assets/invite/family.jpg', eager: true, particles: 'flower',
       alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
       actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
         'We’d love you with us for ' + esc(invited) + '.</p>',
@@ -375,11 +411,11 @@
         '<h2 class="display outro__title">1+1=3</h2>' +
         '<p class="outro__text">See you in Mulshi</p>' +
         '<div class="event__actions event__actions--center">' +
-          '<a class="btn btn--primary" href="#stay">Stay</a>' +
+          (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
       '</div>';
-    sec.appendChild(particles('heart'));
+    sec.appendChild(particles('mix'));
     return sec;
   }
 
@@ -442,10 +478,24 @@
   window.addEventListener('hashchange', function () { if (guest) route(); });
 
   var saved = load();
-  // A rebuilt guest list gets a new salt, so old logins are asked again.
+  var typed = load(LOGIN_KEY);
   if (saved && saved.events && saved.v === GUESTS.salt) {
     guest = saved;
     enter(false);
+  } else if (typed && typed.name && typed.phone) {
+    // The guest list was rebuilt since this device last logged in: check the
+    // saved name and number against the new list without asking again.
+    $('#gate').hidden = true;
+    findGuest(typed.name, typed.phone).then(function (match) {
+      if (match) {
+        login(typed.name, typed.phone, match);
+        enter(false);
+      } else {
+        $('#g-name').value = typed.name;
+        $('#g-phone').value = typed.phone;
+        $('#gate').hidden = false;
+      }
+    });
   } else {
     $('#gate').hidden = false;
   }
