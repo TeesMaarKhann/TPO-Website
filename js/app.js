@@ -20,25 +20,52 @@
 
   /* ---------- Guest lookup (must match tools/build_guests.py) ---------- */
 
-  function normName(name) {
+  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'family', 'mr', 'mrs', 'ms', 'dr'];
+
+  function nameWords(name) {
     name = name.toLowerCase().replace(/\(.*?\)/g, ' ').trim().replace(/^\w+_\s*/, '');
-    return (name.match(/[a-z]+/g) || []).sort().join(' ');
+    return name.match(/[a-z]+/g) || [];
+  }
+  // Full name (word order ignored), then the first name on its own.
+  function nameKeys(name) {
+    var w = nameWords(name);
+    var keys = [];
+    if (w.length) {
+      keys.push(w.slice().sort().join(' '));
+      if (w.length > 1 && w[0].length > 1 && NOT_NAMES.indexOf(w[0]) < 0) keys.push(w[0]);
+    }
+    return keys;
   }
   function normPhone(phone) {
     var d = String(phone || '').replace(/\D/g, '');
     return d.length >= 8 ? d.slice(-10) : '';
   }
-  function hash(kind, value) {
-    return sha256(GUESTS.salt + '|' + kind + ':' + value).slice(0, 16);
+
+  // Slow on purpose (PBKDF2, GUESTS.iter rounds) so the list can't be guessed.
+  function deriveKey(text) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(text), 'PBKDF2', false, ['deriveBits'])
+      .then(function (k) {
+        return crypto.subtle.deriveBits(
+          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, 96);
+      })
+      .then(function (bits) {
+        return Array.prototype.map.call(new Uint8Array(bits), function (b) {
+          return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+      });
   }
 
+  // Resolves to [events, resort] or null. Needs both name and phone.
   function findGuest(name, phone) {
     var p = normPhone(phone);
-    var n = normName(name);
-    var byPhone = p ? GUESTS.p[hash('p', p)] : null;
-    var byName = n ? GUESTS.n[hash('n', n)] : null;
-    // Phone is the more reliable match; fall back to name.
-    return byPhone || byName || null;
+    var keys = nameKeys(name);
+    if (!p || !keys.length || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+    return keys.reduce(function (found, n) {
+      return found.then(function (hit) {
+        return hit || deriveKey(n + '|' + p).then(function (k) { return GUESTS.g[k] || null; });
+      });
+    }, Promise.resolve(null));
   }
 
   function save(g) {
@@ -65,14 +92,21 @@
       if (!name || !phone) {
         return showErr('Please add both your name and phone number.');
       }
-      var match = findGuest(name, phone);
-      if (!match) {
-        return showErr('We couldn’t find you on the guest list. Try the name and number your invite was sent to, or give Ishita or Sarvesh a call.');
-      }
+      var btn = form.querySelector('button[type=submit]');
+      var label = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Checking the guest list…';
       err.hidden = true;
-      guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
-      save(guest);
-      enter(true);
+      findGuest(name, phone).then(function (match) {
+        btn.disabled = false;
+        btn.innerHTML = label;
+        if (!match) {
+          return showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+        }
+        guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+        save(guest);
+        enter(true);
+      });
     });
 
     function showErr(msg) {

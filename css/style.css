@@ -95,6 +95,7 @@ a { color: inherit; }
   -webkit-tap-highlight-color: transparent;
 }
 .btn:active { transform: scale(.96); }
+.btn[disabled] { opacity: .75; cursor: progress; }
 .btn--primary { background: var(--rose); color: #fff; box-shadow: 0 8px 18px -10px var(--rose-deep); }
 .btn--primary:hover { background: var(--rose-deep); }
 .btn--ghost { border-color: currentColor; color: var(--olive); background: rgba(255, 255, 255, .4); }
