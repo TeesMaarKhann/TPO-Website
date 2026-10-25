@@ -406,7 +406,7 @@ main { padding-top: var(--topbar); }
 .outro__title { color: var(--rose); font-size: clamp(3.5rem, 16vw, 7rem); }
 .outro__text { color: var(--olive); font-style: italic; font-size: 1rem; margin: .4rem 0 0; }
 .outro__text strong { color: var(--ink); font-weight: 500; }
-.event__actions--center { justify-content: center !important; flex-wrap: wrap !important; }
+.event__actions--center { display: flex; justify-content: center; flex-wrap: wrap; gap: 28px; margin-top: 1.4rem; }
 .outro__out { margin-top: 2rem; font-size: .9rem; color: var(--muted); }
 
 /* ---------- Scroll animation: pieces rise into place ---------- */
