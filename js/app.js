@@ -91,6 +91,7 @@
   /* ---------- Home / gate ---------- */
 
   function initGate() {
+    $('#gate').appendChild(particles('flower', 10));
     var form = $('#gate-form');
     var err = $('#gate-error');
     form.addEventListener('submit', function (e) {
@@ -177,13 +178,7 @@
       else a.removeAttribute('aria-current');
     });
     if (isEvent) goTo(page, false);
-    if (view !== 'events') {
-      window.scrollTo(0, 0);
-      document.body.style.setProperty('--page', PAPER);
-    } else {
-      var act = document.querySelector('.panel.is-active');
-      if (act) document.body.style.setProperty('--page', act.style.getPropertyValue('--bg') || PAPER);
-    }
+    if (view !== 'events') window.scrollTo(0, 0);
   }
 
   /* ---------- Events scroller ---------- */
@@ -273,7 +268,7 @@
       }
     });
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
-    document.body.style.setProperty('--page', sec.style.getPropertyValue('--bg') || PAPER);
+    if (sec.dataset.key === 'end') countdown(sec);
   }
 
   function goTo(key, smooth) {
@@ -284,38 +279,35 @@
 
   // The pieces that float up behind each panel are the small motifs from the
   // invites' own backgrounds (assets/motifs, cut by tools/cut_motifs.py).
-  // [file, smallest size, largest size in px]
+  // [file, smallest size, largest size in px]. 'bubble' is drawn in CSS.
   var MOTIFS = {
-    flower:   [['flower', 14, 24]],
-    haldi:    [['flower2', 14, 24]],
+    flower:   [['flower', 14, 24], ['flower2', 14, 22]],
     sparkle:  [['sparkle', 14, 26], ['sparkle2', 12, 22]],
-    marigold: [['marigold.svg', 24, 44], ['leaf.svg', 16, 30]],
-    bulb:     [['bulb', 16, 30]],
-    mix:      [['flower', 14, 22], ['sparkle', 14, 22], ['marigold.svg', 20, 34], ['bulb', 16, 26]]
+    marigold: [['marigold-gold.svg', 18, 32], ['marigold.svg', 20, 34], ['leaf-sage.svg', 14, 24]],
+    bubble:   [['bubble', 8, 22]],
+    mix:      [['flower', 14, 22], ['sparkle', 14, 22], ['marigold.svg', 20, 32], ['flower2', 14, 22]]
   };
 
-  function particles(kind) {
+  function particles(kind, count) {
     var set = MOTIFS[kind] || MOTIFS.flower;
     var wrap = el('div', 'particles particles--' + kind);
     wrap.setAttribute('aria-hidden', 'true');
-    for (var i = 0; i < 14; i++) {
+    for (var i = 0; i < (count || 12); i++) {
       var m = set[i % set.length];
       var file = m[0].indexOf('.') < 0 ? m[0] + '.webp' : m[0];
       var p = el('span');
-      p.style.backgroundImage = 'url(assets/motifs/' + file + ')';
+      if (m[0] !== 'bubble') p.style.backgroundImage = 'url(assets/motifs/' + file + ')';
+      p.style.setProperty('--o', (0.45 + Math.random() * 0.35).toFixed(2));
       p.style.left = (2 + Math.random() * 94) + '%';
       p.style.animationDelay = (-Math.random() * 12).toFixed(2) + 's';
       p.style.animationDuration = (9 + Math.random() * 7).toFixed(2) + 's';
       p.style.setProperty('--size', Math.round(m[1] + Math.random() * (m[2] - m[1])) + 'px');
       p.style.setProperty('--drift', (Math.random() * 60 - 30).toFixed(0) + 'px');
-      p.style.setProperty('--spin', (Math.random() < .5 ? -1 : 1) * Math.round(90 + Math.random() * 180) + 'deg');
+      p.style.setProperty('--spin', m[0] === 'bubble' ? '0deg' : (Math.random() < .5 ? -1 : 1) * Math.round(90 + Math.random() * 180) + 'deg');
       wrap.appendChild(p);
     }
     return wrap;
   }
-
-  // Paper colour of each invite, so the page around the artwork matches it.
-  var PAPER = '#ebe9e5';
 
   // Desktop: each invite split into pieces (assets/desk) and spread across
   // the page. Phones: the whole invite on one screen.
@@ -342,7 +334,7 @@
           '<div class="d-col wd-col">' + img('wedding-title', 'wd-title', 'Phera Pheri') +
           img('wedding-text', 'wd-text', '10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.') + actions + '</div>';
       case 'cocktail':
-        return '<img class="d-p c-art" src="assets/invite/cocktail.jpg" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
+        return '<img class="d-p c-art" src="assets/mobile/cocktail.webp" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
           '<div class="d-col c-col">' + actions + '</div>';
     }
     return '';
@@ -355,7 +347,6 @@
     sec.dataset.tab = opts.tab;
     sec.dataset.accent = opts.accent;
     sec.style.setProperty('--ev', opts.accent);
-    sec.style.setProperty('--bg', opts.paper || PAPER);
     sec.appendChild(particles(opts.particles));
     var wrap = el('div', 'art-wrap');
     wrap.innerHTML =
@@ -382,7 +373,7 @@
       : names[0];
     return artPanel({
       key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
-      img: 'assets/invite/family.jpg', eager: true, particles: 'flower',
+      img: 'assets/mobile/family.webp', eager: true, particles: 'flower',
       alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
       actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
         'We’d love you with us for ' + esc(invited) + '.</p>',
@@ -393,7 +384,7 @@
   function eventSection(ev, i, list) {
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
-      paper: ev.paper, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
+      img: ev.card, alt: ev.cardAlt, particles: ev.particles,
       actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
         '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
       next: nextCue(list[i + 1])
@@ -410,6 +401,7 @@
       '<div class="outro">' +
         '<h2 class="display outro__title">1+1=3</h2>' +
         '<p class="outro__text">See you in Mulshi</p>' +
+        '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
           (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
@@ -417,6 +409,40 @@
       '</div>';
     sec.appendChild(particles('mix'));
     return sec;
+  }
+
+  // Days until the guest's first event, counted up once when the last page
+  // first comes into view.
+  function countdown(sec) {
+    var box = sec.querySelector('.countdown');
+    if (!box || box.dataset.done) return;
+    box.dataset.done = '1';
+    var first = myEvents()[0];
+    if (!first || !first.on) return;
+    var p = first.on.split('-');
+    var day = new Date(+p[0], p[1] - 1, +p[2]);
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var days = Math.round((day - now) / 864e5);
+    if (days < 0) return;
+    var num = box.querySelector('b');
+    var label = box.querySelector('span');
+    if (days === 0) {
+      num.textContent = '';
+      label.textContent = 'Today’s the day!';
+      box.hidden = false;
+      return;
+    }
+    label.textContent = days === 1 ? 'day to go' : 'days to go';
+    box.hidden = false;
+    if (reduceMotion) { num.textContent = days; return; }
+    var start = null, dur = Math.min(1600, 500 + days * 20);
+    function tick(t) {
+      if (start === null) start = t;
+      var k = Math.min(1, (t - start) / dur);
+      num.textContent = Math.round(days * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    }
+    setTimeout(function () { requestAnimationFrame(tick); }, 500);
   }
 
   /* ---------- Wardrobe planner popup ---------- */

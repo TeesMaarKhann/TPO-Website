@@ -23,23 +23,24 @@ window.PLACES = {
 };
 
 // Order here is the scroll order. `code` matches the letters in the guest
-// list (H, S, W, C).
+// list (H, S, W, C). `on` is the date the countdown on the last page counts
+// down to (the guest's first event). `particles` is what floats up behind it.
 window.EVENTS = [
   {
     code: 'H',
     id: 'haldi',
-    paper: '#eae9e5',
     tab: 'Haldi',
     title: 'Yello!',
     kicker: 'Haldi and Welcome Lunch to kick things off',
     date: '9th December',
+    on: '2026-12-09',
     day: 'Wednesday',
     times: ['11 am Onwards'],
     place: 'P',
-    card: 'assets/invite/haldi.jpg',
+    card: 'assets/mobile/haldi.webp',
     cardAlt: 'Illustrated invite: Yello! Haldi and Welcome Lunch, 9th December, 11 am onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c9a227',
-    particles: 'haldi',
+    particles: 'marigold',
     wardrobe: {
       image: 'assets/wardrobe/haldi.jpg',
       name: 'Haldi',
@@ -51,15 +52,15 @@ window.EVENTS = [
   {
     code: 'S',
     id: 'sangeet',
-    paper: '#ebe9e5',
     tab: 'Sangeet',
     title: 'Kar-de-Disco',
     kicker: 'Time to get on the dance floor!',
     date: '9th December',
+    on: '2026-12-09',
     day: 'Wednesday',
     times: ['7pm Onwards'],
     place: 'P',
-    card: 'assets/invite/sangeet.jpg',
+    card: 'assets/mobile/sangeet.webp',
     cardAlt: 'Illustrated invite: Kar-de-Disco. Time to get on the dance floor! 9th December, 7pm onwards, Palmwoods Retreat, Mulshi.',
     accent: '#1f3f8f',
     particles: 'sparkle',
@@ -74,18 +75,18 @@ window.EVENTS = [
   {
     code: 'W',
     id: 'wedding',
-    paper: '#f7f3ea',
     tab: 'Wedding',
     title: 'Phera Pheri',
     kicker: '2021 – 2026 – ∞',
     date: '10th December',
+    on: '2026-12-10',
     day: 'Thursday',
     times: ['Vidhi : 7:30am', 'Muhurat : 12:19pm'],
     place: 'G',
-    card: 'assets/invite/wedding.jpg',
+    card: 'assets/mobile/wedding.webp',
     cardAlt: 'Illustrated invite: Phera Pheri. 10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.',
     accent: '#c96f6a',
-    particles: 'marigold',
+    particles: 'flower',
     wardrobe: {
       image: 'assets/wardrobe/wedding.jpg',
       name: 'Phera-Pheri',
@@ -97,18 +98,18 @@ window.EVENTS = [
   {
     code: 'C',
     id: 'cocktail',
-    paper: '#f6f2e9',
     tab: 'Cocktail',
     title: 'Toast & Tonic',
     kicker: 'Raise a glass to the newlyweds',
     date: '10th December',
+    on: '2026-12-10',
     day: 'Thursday',
     times: ['5:30pm onwards'],
     place: 'P',
-    card: 'assets/invite/cocktail.jpg',
+    card: 'assets/mobile/cocktail.webp',
     cardAlt: 'Illustrated invite: Toast & Tonic. 10th December, 5:30pm onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c47f6e',
-    particles: 'bulb',
+    particles: 'bubble',
     // No wardrobe page yet. Add one like the others when it's ready.
     wardrobe: null
   }
