@@ -89,6 +89,14 @@ window.EVENTS = [
     cardAlt: 'Illustrated invite: Phera Pheri. 10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.',
     accent: '#c96f6a',
     particles: 'flower',
+    // Guests not at Haldi or Sangeet (the W and WC blocks) skip the Vidhi, so
+    // they get the "10:30am onwards" invite instead.
+    dayGuests: {
+      times: ['10:30am onwards', 'Muhurat : 12:19pm'],
+      card: 'assets/mobile/wedding-day.webp',
+      cardAlt: 'Illustrated invite: Phera Pheri. 10th December, Thursday. 10:30am onwards, Muhurat 12:19pm. Golden Fields Resort, Mulshi.',
+      deskText: 'wedding-text-day'
+    },
     wardrobe: {
       image: 'assets/wardrobe/wedding.jpg',
       name: 'Phera-Pheri',
@@ -109,7 +117,7 @@ window.EVENTS = [
     times: ['5:30pm onwards'],
     place: 'P',
     card: 'assets/mobile/cocktail.webp',
-    cardAlt: 'Illustrated invite: Toast & Tonic. 10th December, 5:30pm onwards, Palmwoods Retreat, Mulshi.',
+    cardAlt: 'Illustration for Toast & Tonic: Ishita and Sarvesh kiss under a giant wine glass while their golden retriever licks a spilled drink.',
     accent: '#c47f6e',
     particles: 'bubble',
     // No wardrobe page yet. Add one like the others when it's ready.

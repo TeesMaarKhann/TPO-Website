@@ -10,7 +10,10 @@ os.makedirs(OUT, exist_ok=True)
 # The cover is cut down to just the illustration; the home page writes the
 # names and dates itself.
 CROP = {'cover': (150, 100, 870, 875)}
-NAMES = {'cover': True, 'family': False, 'haldi': True, 'sangeet': True, 'wedding': True, 'cocktail': True}
+# No faint motifs behind these, so pale lines (the cocktail glass) are kept.
+KEEP_PALE = {'cocktail'}
+NAMES = {'cover': True, 'family': False, 'haldi': True, 'sangeet': True, 'wedding': True,
+         'wedding-day': True, 'cocktail': True}
 for name, fill in NAMES.items():
     im = np.array(Image.open(f'{SRC}/{name}.jpg').convert('RGB')).astype(np.float32)
     h, w = im.shape[:2]
@@ -20,7 +23,8 @@ for name, fill in NAMES.items():
     dist = np.sqrt(((im - paper) ** 2).sum(-1))
     alpha = np.clip((dist - 16) / 26, 0, 1)
     # faint background motifs: light and pale -> drop
-    alpha[(hsv[..., 1] < 45) & (hsv[..., 2] > 185)] = 0
+    if name not in KEEP_PALE:
+        alpha[(hsv[..., 1] < 45) & (hsv[..., 2] > 185)] = 0
     if fill:
         solid = (alpha > 0.35).astype(np.uint8)
         solid = cv2.morphologyEx(solid, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
