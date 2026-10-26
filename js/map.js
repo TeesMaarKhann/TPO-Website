@@ -17,6 +17,14 @@ window.WeddingMap = (function () {
   var ROUTE_A_P = 'M104 92 L118 160 C130 182 165 192 240 220 C292 242 330 268 358 302 C372 330 366 380 380 422 C394 462 418 490 438 512 C452 526 482 508 520 500';
   var ROUTE_G_J = 'M162 436 C176 462 186 500 205 530 C230 546 262 545 300 524 C330 506 360 492 392 494 C412 496 426 504 438 512';
 
+  // Google Maps directions to a place (key in PLACES or any address). With no
+  // `from`, Google starts from wherever the guest is.
+  function directions(to, from) {
+    function q(x) { return encodeURIComponent(PLACES[x] ? PLACES[x].dest : x); }
+    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + q(to) +
+      (from ? '&origin=' + q(from) : '');
+  }
+
   function svg(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
     for (var k in attrs) n.setAttribute(k, attrs[k]);
@@ -137,7 +145,7 @@ window.WeddingMap = (function () {
         '<p class="mp-name">' + p.name + '</p>' +
         (mine ? '<p class="mp-mine">Your stay</p>' : '') +
         (rows ? '<ul class="mp-list">' + rows + '</ul>' : '') +
-        '<a class="mp-go" href="' + p.url + '" target="_blank" rel="noopener">Directions <span aria-hidden="true">↗</span></a>';
+        '<a class="mp-go" href="' + directions(k) + '" target="_blank" rel="noopener" data-dir="' + p.name + '">Directions <span aria-hidden="true">↗</span></a>';
 
       // Sit next to the pin. Wide maps: beside it. Narrow (phones): above or below it.
       var spot = SPOTS[k];
@@ -185,5 +193,5 @@ window.WeddingMap = (function () {
     select(opts.resort && PLACES[opts.resort] ? opts.resort : (opts.events[0] ? opts.events[0].place : 'P'));
   }
 
-  return { mount: mount };
+  return { mount: mount, directions: directions };
 })();

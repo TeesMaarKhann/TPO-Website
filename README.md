@@ -12,10 +12,18 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 1. **Home** – the invite cover. Guests type their name and phone number.
 2. **Events** – a snap-scrolling list of only the events that guest is invited
    to, with tabs on top and a wardrobe planner popup per event.
-3. **Stay** – which resort the guest is staying at, plus the illustrated map.
-   Each place on the map opens Google Maps directions. Guests invited to the
-   wedding alone don't see this page.
-4. **Tinker** – a quick word game (Shaadi Scramble).
+3. **Itinerary** – the tent-card schedule, one tab per day, cut down to that
+   guest: only their events, and check-in, hi-tea, breakfast and check-out at
+   their own resort. Wedding + Cocktail guests see just those two; guests
+   invited to the wedding alone don't see this page.
+4. **Stay** – which resort the guest is staying at, plus the illustrated map,
+   then **Travel plans**: the guest picks flight (with landing day and time),
+   car or cab. Answers land in the **Visits** tab as a "Travel plan" row (see
+   Visit log below). Guests invited to the wedding alone don't see this page.
+5. **Tinker** – a quick word game (Shaadi Scramble).
+
+The **Menu** button on the top right opens all of these. The map and the
+event pages open Google Maps directions.
 
 ## Updating the guest list
 
@@ -53,7 +61,13 @@ types both, and the browser rebuilds the same key and looks it up.
 ## Editing content
 
 - Event names, times, venues, dress codes: `js/data.js`
-- Map links and clickable areas on the map: `PLACES` in `js/data.js`
+- Where directions point: `dest` in `PLACES` in `js/data.js` (a name, or
+  "latitude,longitude" for an exact pin)
+- Itinerary rows: `ITINERARY` in `js/data.js` (who sees each row is explained
+  there)
+- Travel plans question and landing days: `MODES` and `LAND_DAYS` in `js/app.js`
+- Itinerary icons (`assets/itinerary`) are cut from the tent card by
+  `tools/cut_itinerary.py`
 - The game: `js/tinker.js` (replace it with any game that exposes
   `window.Tinker.mount(element)`)
 - Images: `assets/`
