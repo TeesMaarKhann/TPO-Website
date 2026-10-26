@@ -158,15 +158,3 @@ window.ITINERARY = [
   }
 ];
 
-// Travel plans on the Stay page. `from` are the usual starting points; each
-// becomes a "Directions from ..." link to the guest's first venue.
-// `notes` are shown as they are, e.g. shuttle timings:
-//   'A shuttle leaves Golden Fields for Palmwoods every 30 minutes from 6 pm.'
-window.TRAVEL = {
-  from: [
-    { label: 'Pune Airport', dest: 'Pune International Airport' },
-    { label: 'Pune Station', dest: 'Pune Junction railway station' },
-    { label: 'Mumbai', dest: 'Mumbai, Maharashtra' }
-  ],
-  notes: []
-};

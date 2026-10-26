@@ -141,10 +141,13 @@
   var visitId = Math.random().toString(36).slice(2, 8);
   var logged = {};
   function track(action, page, name) {
-    if (!LOG_URL) return;
     var id = action + '|' + (page || '');
     if (logged[id]) return;
     logged[id] = true;
+    send(action, page, name);
+  }
+  function send(action, page, name) {
+    if (!LOG_URL) return;
     var typed = load(LOGIN_KEY);
     var row = {
       name: name || (typed && typed.name) || (guest && guest.name) || '',
@@ -673,103 +676,166 @@
     }).filter(function (d) { return d.items.length; });
   }
 
-  function placeLink(k, cls) {
-    var p = PLACES[k];
-    return '<a class="' + cls + '" href="' + WeddingMap.directions(k) + '" target="_blank" rel="noopener" data-dir="' + esc(p.name) + '">' +
-      esc(p.name) + ' <span aria-hidden="true">↗</span></a>';
-  }
-
+  // One tab per day; tapping an event just gives it a little pop.
   function buildItinerary() {
     var days = myItinerary();
     var mine = PLACES[guest.resort];
-    $('#itinerary-line').textContent = (mine ? 'You’re staying at ' + mine.name + '. ' : '') +
-      'Tap a place for directions.';
-    $('#itinerary').innerHTML = days.map(function (d) {
-      return '<section class="itin__day">' +
-        '<h3 class="itin__date">' + esc(d.day) + ', ' + esc(d.date) + '</h3>' +
-        '<ol class="itin__list">' + d.items.map(function (it, i) {
-          return '<li class="itin__item" style="--i:' + i + '">' +
-            '<img class="itin__icon" src="assets/itinerary/' + it.icon + '.webp" alt="" loading="lazy">' +
-            '<div class="itin__text">' +
-              '<p class="itin__what">' + esc(it.what) + '</p>' +
-              '<p class="itin__time">' + esc(it.time) + '</p>' +
-              placeLink(it.place, 'itin__place') +
-            '</div></li>';
-        }).join('') + '</ol></section>';
-    }).join('');
+    $('#itinerary-line').textContent = mine ? 'You’re staying at ' + mine.name + '.' : '';
+    $('#itinerary-line').hidden = !mine;
+    var box = $('#itinerary');
+    if (!days.length) { box.innerHTML = ''; return; }
+
+    // Open on today during the wedding, otherwise the first day.
+    var today = new Date().getDate() + ' ' + new Date().toLocaleString('en-GB', { month: 'long' });
+    var open = Math.max(0, days.findIndex(function (d) { return d.date === today; }));
+
+    box.innerHTML =
+      '<div class="itin__tabs" role="tablist" aria-label="Days">' + days.map(function (d, i) {
+        return '<button class="itin__tab" type="button" role="tab" id="itab-' + i + '" aria-controls="iday-' + i + '"' +
+          ' aria-selected="' + (i === open) + '" tabindex="' + (i === open ? 0 : -1) + '">' +
+          '<span class="itin__tab-day">' + esc(d.day) + '</span>' +
+          '<span class="itin__tab-date">' + esc(d.date.replace(' December', ' Dec')) + '</span></button>';
+      }).join('') + '</div>' +
+      days.map(function (d, i) {
+        return '<section class="itin__day" role="tabpanel" id="iday-' + i + '" aria-labelledby="itab-' + i + '"' + (i === open ? '' : ' hidden') + '>' +
+          '<ol class="itin__list">' + d.items.map(function (it, j) {
+            return '<li class="itin__item" style="--i:' + j + '">' +
+              '<img class="itin__icon" src="assets/itinerary/' + it.icon + '.webp" alt="" loading="lazy">' +
+              '<div class="itin__text">' +
+                '<p class="itin__what">' + esc(it.what) + '</p>' +
+                '<p class="itin__time">' + esc(it.time) + '</p>' +
+                '<p class="itin__place">' + esc(PLACES[it.place].name) + '</p>' +
+              '</div></li>';
+          }).join('') + '</ol></section>';
+      }).join('');
+
+    var tabs = box.querySelectorAll('.itin__tab');
+    function show(i, focus) {
+      tabs.forEach(function (t, k) {
+        var on = k === i;
+        t.setAttribute('aria-selected', on);
+        t.tabIndex = on ? 0 : -1;
+        $('#iday-' + k).hidden = !on;
+      });
+      if (focus) tabs[i].focus();
+      track('Saw', 'Itinerary › ' + days[i].day);
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { show(i); });
+      t.addEventListener('keydown', function (e) {
+        var n = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (n) { e.preventDefault(); show((i + n + tabs.length) % tabs.length, true); }
+      });
+    });
+    box.addEventListener('click', function (e) {
+      var it = e.target.closest('.itin__item');
+      if (!it) return;
+      it.classList.remove('is-pop');
+      void it.offsetWidth;
+      it.classList.add('is-pop');
+    });
+    box.addEventListener('animationend', function (e) {
+      if (e.animationName === 'itin-pop') e.target.classList.remove('is-pop');
+    });
   }
 
   /* ---------- Travel plans (bottom of the Stay page) ---------- */
 
-  // Every time the guest needs to go somewhere else, worked out from their
-  // itinerary: arriving, moving between venues, back to the resort at night,
-  // and heading home.
+  // Asks how the guest is getting here (and when a flight lands). The answer
+  // goes to the Visits tab of the sheet as a "Travel plan" row, and is kept on
+  // their device so they can see or change it.
+  var TRAVEL_KEY = 'is-wedding-travel-v1';
+  var MODES = [
+    { id: 'Flight', icon: '✈️' },
+    { id: 'Car', icon: '🚗' },
+    { id: 'Cab', icon: '🚕' }
+  ];
+  var LAND_DAYS = ['8 December', '9 December', '10 December'];
+
   function buildTravel() {
-    var days = myItinerary();
     var box = $('#travel');
-    if (!days.length) { box.innerHTML = ''; return; }
-    var resort = PLACES[guest.resort] ? guest.resort : '';
-    var first = days[0].items[0];
-    var lastDay = days[days.length - 1];
-    var last = lastDay.items[lastDay.items.length - 1];
+    var plan = load(TRAVEL_KEY);
+    var first = myItinerary()[0];
+    var firstDay = first ? first.date : LAND_DAYS[1];
 
-    function short(k) { return esc(PLACES[k].short || PLACES[k].name); }
-    function trip(from, to) {
-      return '<a class="travel__go" href="' + WeddingMap.directions(to, from) + '" target="_blank" rel="noopener" data-dir="' +
-        esc(PLACES[from] ? PLACES[from].name : from) + ' → ' + esc(PLACES[to] ? PLACES[to].name : to) + '">Route <span aria-hidden="true">↗</span></a>';
-    }
-    function hubs(to, back) {
-      return '<div class="travel__hubs">' +
-        (back ? '' : '<a class="btn btn--primary btn--sm" href="' + WeddingMap.directions(to) + '" target="_blank" rel="noopener" data-dir="' + esc(PLACES[to].name) + '">From where you are ↗</a>') +
-        TRAVEL.from.map(function (h) {
-          var url = back ? WeddingMap.directions(h.dest, to) : WeddingMap.directions(to, h.dest);
-          return '<a class="btn btn--ghost btn--sm" href="' + url + '" target="_blank" rel="noopener" data-dir="' +
-            esc(back ? PLACES[to].name + ' → ' + h.label : h.label + ' → ' + PLACES[to].name) + '">' +
-            (back ? 'To ' : 'From ') + esc(h.label) + ' ↗</a>';
-        }).join('') + '</div>';
+    function summary(p) {
+      if (p.mode !== 'Flight') return 'By ' + p.mode.toLowerCase();
+      return 'Flight, landing ' + p.day.replace(' December', ' Dec') + ' at ' + niceTime(p.time);
     }
 
-    var moves = [];
-    days.forEach(function (d, i) {
-      var at = i > 0 && resort ? resort : first.place;
-      var rows = [];
-      d.items.forEach(function (it) {
-        if (it.place !== at) {
-          rows.push('<li><span class="travel__when">By ' + esc(it.time) + '</span>' +
-            '<span class="travel__trip">' + short(at) + ' → ' + short(it.place) + '</span>' +
-            '<span class="travel__for">for ' + esc(it.what) + '</span>' + trip(at, it.place) + '</li>');
-          at = it.place;
+    function done(p) {
+      box.innerHTML = head() +
+        '<div class="travel__card travel__card--done">' +
+          '<p class="travel__thanks">Thank you! We’ve noted:</p>' +
+          '<p class="travel__answer">' + esc(summary(p)) + '</p>' +
+          '<button class="linkish" type="button" data-change>Change</button>' +
+        '</div>';
+      box.querySelector('[data-change]').addEventListener('click', function () { form(p); });
+    }
+
+    function form(p) {
+      p = p || {};
+      box.innerHTML = head() +
+        '<form class="travel__card travel__form" novalidate>' +
+          '<p class="travel__q">How are you travelling?</p>' +
+          '<div class="travel__modes" role="radiogroup" aria-label="How are you travelling?">' +
+            MODES.map(function (m) {
+              return '<label class="mode"><input type="radio" name="mode" value="' + m.id + '"' + (p.mode === m.id ? ' checked' : '') + '>' +
+                '<span class="mode__icon" aria-hidden="true">' + m.icon + '</span><span class="mode__name">' + m.id + '</span></label>';
+            }).join('') +
+          '</div>' +
+          '<div class="travel__flight" hidden>' +
+            '<p class="travel__q travel__q--sm">When do you land?</p>' +
+            '<div class="travel__when">' +
+              '<label class="field"><span>Day</span><select name="day">' + LAND_DAYS.map(function (d) {
+                return '<option' + ((p.day || firstDay) === d ? ' selected' : '') + '>' + d + '</option>';
+              }).join('') + '</select></label>' +
+              '<label class="field"><span>Landing time</span><input type="time" name="time" value="' + esc(p.time || '') + '"></label>' +
+            '</div>' +
+          '</div>' +
+          '<p class="gate__error" role="alert" hidden></p>' +
+          '<button class="btn btn--primary btn--wide" type="submit">Save</button>' +
+        '</form>';
+
+      var f = box.querySelector('form');
+      var flight = f.querySelector('.travel__flight');
+      var err = f.querySelector('.gate__error');
+      function sync() {
+        var m = f.querySelector('input[name=mode]:checked');
+        flight.hidden = !m || m.value !== 'Flight';
+      }
+      f.addEventListener('change', sync);
+      sync();
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var m = f.querySelector('input[name=mode]:checked');
+        if (!m) return showErr('Please pick flight, car or cab.');
+        var out = { mode: m.value };
+        if (m.value === 'Flight') {
+          out.day = f.day.value;
+          out.time = f.time.value;
+          if (!out.time) return showErr('Please add your landing time.');
         }
+        try { localStorage.setItem(TRAVEL_KEY, JSON.stringify(out)); } catch (e2) { /* private mode */ }
+        send('Travel plan', summary(out));
+        done(out);
       });
-      var end = d.items[d.items.length - 1];
-      if (resort && at !== resort && d !== lastDay) {
-        rows.push('<li><span class="travel__when">After ' + esc(end.what.toLowerCase()) + '</span>' +
-          '<span class="travel__trip">' + short(at) + ' → ' + short(resort) + '</span>' +
-          '<span class="travel__for">back to your stay</span>' + trip(at, resort) + '</li>');
-      }
-      if (rows.length) {
-        moves.push('<h4 class="travel__day">' + esc(d.day) + ', ' + esc(d.date) + '</h4><ol class="travel__list">' + rows.join('') + '</ol>');
-      }
-    });
+      function showErr(msg) { err.textContent = msg; err.hidden = false; }
+    }
 
-    box.innerHTML =
-      '<div class="ornament" aria-hidden="true"><span></span><i>❀</i><span></span></div>' +
-      '<h3 class="display travel__title">Travel plans</h3>' +
-      '<div class="travel__card">' +
-        '<p class="eyebrow">Getting here</p>' +
-        '<p class="travel__lead">Be at <b>' + esc(PLACES[first.place].name) + '</b> by <b>' + esc(first.time) + '</b> on ' +
-          esc(days[0].day) + ', ' + esc(days[0].date) + ' for ' + esc(first.what) + '.</p>' +
-        hubs(first.place) +
-      '</div>' +
-      (moves.length ? '<div class="travel__card"><p class="eyebrow">Getting around</p>' + moves.join('') + '</div>' : '') +
-      '<div class="travel__card">' +
-        '<p class="eyebrow">Heading home</p>' +
-        '<p class="travel__lead">After ' + esc(last.what.toLowerCase()) + ' at <b>' + esc(last.time) + '</b> on ' +
-          esc(lastDay.day) + ', ' + esc(lastDay.date) + ', from ' + esc(PLACES[last.place].name) + '.</p>' +
-        hubs(last.place, true) +
-      '</div>' +
-      (TRAVEL.notes.length ? '<div class="travel__card"><p class="eyebrow">Good to know</p><ul class="travel__notes">' +
-        TRAVEL.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></div>' : '');
+    function head() {
+      return '<div class="ornament" aria-hidden="true"><span></span><i>❀</i><span></span></div>' +
+        '<h3 class="display travel__title">Travel plans</h3>';
+    }
+
+    if (plan && plan.mode) done(plan); else form();
+  }
+
+  // "14:30" -> "2:30 PM"
+  function niceTime(t) {
+    var p = String(t).split(':'), h = +p[0];
+    if (isNaN(h)) return t;
+    return ((h + 11) % 12 + 1) + ':' + (p[1] || '00') + ' ' + (h < 12 ? 'AM' : 'PM');
   }
 
   // Log which directions guests open.
