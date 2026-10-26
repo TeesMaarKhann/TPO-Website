@@ -1,4 +1,4 @@
-// "Join the Insider" card on the Tinker page, shown only to guests tagged
+// "Join the Insider" section on the Pulp Fiction page, shown only to guests tagged
 // "TPO Insider Access" in the guest sheet.
 //
 // The list is hardwired: each entry is an insider's phone number (last 10
@@ -88,12 +88,13 @@ window.Insider = (function () {
   }
 
   // phone: the guest's number, already cut to its last 10 digits.
+  // Resolves to true (and fills el) for insiders, false for everyone else.
   function mount(el, phone) {
     el.hidden = true;
     el.innerHTML = '';
-    if (!phone || !window.crypto || !crypto.subtle) return;
-    hash(phone).then(function (h) {
-      if (LIST.indexOf(h) < 0) return;
+    if (!phone || !window.crypto || !crypto.subtle) return Promise.resolve(false);
+    return hash(phone).then(function (h) {
+      if (LIST.indexOf(h) < 0) return false;
       el.innerHTML =
         '<p class="eyebrow">Members only</p>' +
         '<h3 class="display insider__title">Join the Insider</h3>' +
@@ -104,7 +105,8 @@ window.Insider = (function () {
           '<span>@tpo_insider</span><span class="insider__arrow" aria-hidden="true">→</span>' +
         '</a>';
       el.hidden = false;
-    }).catch(function () { /* stay hidden */ });
+      return true;
+    }).catch(function () { return false; });
   }
 
   return { mount: mount };

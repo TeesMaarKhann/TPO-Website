@@ -251,9 +251,14 @@
     });
     buildEvents();
     if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
-    window.Tinker.mount($('#game'));
     var typed = load(LOGIN_KEY);
-    window.Insider.mount($('#insider'), normPhone(typed && typed.phone));
+    // Pulp Fiction only holds the insiders' section for now, so the page,
+    // its menu link and its button on the last Events page are insiders only.
+    window.Insider.mount($('#insider'), normPhone(typed && typed.phone)).then(function (yes) {
+      isInsider = yes;
+      document.querySelectorAll('[data-insider]').forEach(function (n) { n.hidden = !yes; });
+      if (yes && location.hash === '#pulp-fiction') route();
+    });
     app.hidden = false;
     if (animate && !reduceMotion) {
       gate.classList.add('gate--leaving');
@@ -266,7 +271,8 @@
 
   /* ---------- Routing between the pages ---------- */
 
-  var VIEWS = ['events', 'itinerary', 'stay', 'tinker'];
+  var VIEWS = ['events', 'itinerary', 'stay', 'pulp-fiction'];
+  var isInsider = false;
 
   function route() {
     var page = (location.hash || '#events').slice(1);
@@ -274,11 +280,12 @@
     if (VIEWS.indexOf(page) < 0 && page !== 'travel' && !$('#ev-' + page)) page = 'events';
     // Guests invited to the wedding alone don't get Itinerary, Stay or Travel.
     if ((page === 'stay' || page === 'travel' || page === 'itinerary') && !hasStay()) page = 'events';
+    if (page === 'pulp-fiction' && !isInsider) page = 'events';
     var isEvent = !!$('#ev-' + page);
     // Travel plans live at the bottom of the Stay page.
     var view = isEvent ? 'events' : page === 'travel' ? 'stay' : page;
     var nav = page === 'travel' ? 'travel' : view;
-    track('Opened', page === 'travel' ? 'Travel plans' : view.charAt(0).toUpperCase() + view.slice(1));
+    track('Opened', page === 'travel' ? 'Travel plans' : view === 'pulp-fiction' ? 'Pulp Fiction' : view.charAt(0).toUpperCase() + view.slice(1));
 
     VIEWS.forEach(function (v) {
       $('#view-' + v).hidden = v !== view;
@@ -596,7 +603,7 @@
         '<div class="event__actions event__actions--center">' +
           (hasStay() ? '<a class="btn btn--primary" href="#itinerary">Itinerary</a>' +
             '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
-          '<a class="btn btn--primary" href="#tinker">Play</a>' +
+          '<a class="btn btn--primary" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
         '</div>' +
       '</div>';
     sec.appendChild(particles('mix'));

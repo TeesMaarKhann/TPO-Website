@@ -21,7 +21,10 @@ python3 -m http.server 8000   # then visit http://localhost:8000
    then **Travel plans**: the guest picks flight (with landing day and time),
    car or cab. Answers land in the **Visits** tab as a "Travel plan" row (see
    Visit log below). Guests invited to the wedding alone don't see this page.
-5. **Tinker** – a quick word game (Shaadi Scramble).
+5. **Pulp Fiction** – for now just "Join the Insider", a link to the
+   @tpo_insider Instagram. Only guests tagged "TPO Insider Access" in the
+   sheet see this page, its menu link and its button on the last Events page.
+   The list is hardwired in `js/insiders.js` (see the note at its top).
 
 The **Menu** button on the top right opens all of these. The map and the
 event pages open Google Maps directions.
@@ -69,8 +72,6 @@ types both, and the browser rebuilds the same key and looks it up.
 - Travel plans question and landing days: `MODES` and `LAND_DAYS` in `js/app.js`
 - Itinerary icons (`assets/itinerary`) are cut from the tent card by
   `tools/cut_itinerary.py`
-- The game: `js/tinker.js` (replace it with any game that exposes
-  `window.Tinker.mount(element)`)
 - Images: `assets/`
 - The welcome letter: the words are written by `welcomeSection` in
   `js/app.js`. Phones show the drawing with the letter below it; computers
