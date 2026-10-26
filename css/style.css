@@ -403,29 +403,78 @@ a.art-link { text-decoration: none; }
   .panel.is-active .d-view .c-art { transform: translateX(-50%); }
 }
 
-/* ---- Welcome: the illustrated letter, written to the guest by name ---- */
-.panel--letter { container-type: size; padding: 10px 16px 46px; }
+/* ---- Welcome: the couple and a letter to the guest by name ---- */
+.panel--letter { container-type: size; padding: 0; display: block; }
 .letter {
-  position: relative; z-index: 1;
-  width: min(100cqw - 32px, (100cqh - 56px) * .625);
-  aspect-ratio: 1250 / 2000;
-  container-type: inline-size;
-  box-shadow: 0 22px 44px -28px rgba(70, 55, 35, .45);
-  opacity: 0; transform: translateY(36px);
-  transition: opacity .7s var(--ease-out), transform .9s var(--ease-out);
-}
-.panel.is-active .letter { opacity: 1; transform: none; }
-.letter__art { display: block; width: 100%; height: 100%; }
-.letter__text {
-  position: absolute; left: 10%; right: 10%; top: 51%; bottom: 8%;
+  position: absolute; inset: 0; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2.4cqh; padding: 12px 24px 52px;
+}
+.letter__art {
+  position: relative; display: block; flex: none;
+  width: 100%; max-width: 560px; aspect-ratio: 1080 / 916;
+  max-height: clamp(180px, 100cqh - 340px, 54cqh);
+  padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.letter__art img {
+  display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, #000 86%, transparent);
+}
+.letter__art:focus-visible { outline-offset: 6px; border-radius: 18px; }
+.letter__hint {
+  position: absolute; right: 4%; bottom: 6%;
+  font-family: var(--serif); font-style: italic; font-size: .85rem; color: var(--rose-deep);
+  background: rgba(247, 243, 234, .85); padding: .1rem .6rem; border-radius: 999px;
+  animation: hint 2.4s 1.6s ease-in-out infinite; transition: opacity .4s;
+}
+.letter__art.is-tapped .letter__hint { opacity: 0; }
+.letter__art.is-popping img { animation: letter-pop .75s var(--ease-bounce); }
+.letter__burst {
+  position: absolute; width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  background: center / contain no-repeat; pointer-events: none;
+  animation: letter-burst 1.2s var(--ease-out) forwards;
+}
+.letter__text {
+  position: relative; isolation: isolate; max-width: 30rem;
   text-align: center; font-family: var(--serif); font-style: italic;
-  color: #b8708f; font-size: 4.6cqw; line-height: 1.36; letter-spacing: -.01em;
+  color: #b8708f; font-size: clamp(.92rem, 4.1cqw, 1.1rem); line-height: 1.42;
+}
+.letter__text::before {
+  content: ""; position: absolute; z-index: -1; left: -10%; right: -10%; top: -6%; bottom: -14%;
+  background: url(../assets/letter-stem.webp) center top / contain no-repeat; opacity: .8;
+  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 75%, transparent);
+  mask-image: linear-gradient(transparent, #000 18%, #000 75%, transparent);
 }
 .letter__text p { margin: 0; text-wrap: balance; }
-.letter__text p + p { margin-top: 1.5em; }
-.letter__dear { font-size: 5cqw; overflow-wrap: anywhere; }
-.letter__divider { width: 29%; height: auto; margin: 4.5cqw 0 7cqw; }
+.letter__text p + p { margin-top: 1em; }
+.letter__dear { font-size: 1.3em; overflow-wrap: anywhere; }
+.letter__divider { display: block; width: 7.5em; height: auto; margin: .5em auto 1em; }
+
+/* Pops in when the page comes into view, then the words follow */
+.letter__art, .letter__text { opacity: 0; transition: opacity .6s var(--ease-out), transform .9s var(--ease-out); }
+.letter__text { transform: translateY(30px); transition-delay: .25s; }
+.panel.is-active .letter__art { opacity: 1; animation: letter-in .9s var(--ease-bounce) both; }
+.panel.is-active .letter__text { opacity: 1; transform: none; }
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .letter { flex-direction: row; gap: 5vw; padding: 3cqh 8vw 64px 6vw; }
+  .letter__art { flex: 0 1 auto; width: auto; height: min(84cqh, 46vw * 916 / 1080); max-height: none; max-width: 52vw; }
+  .letter__text { flex: 0 1 34rem; max-width: 34rem; font-size: clamp(1.15rem, 1.75vw, 1.6rem); }
+  .letter__hint { font-size: 1rem; }
+}
+@keyframes letter-in { 0% { transform: scale(.82); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+@keyframes letter-pop {
+  0% { transform: scale(1); } 30% { transform: scale(1.1) rotate(-3deg); }
+  55% { transform: scale(.96) rotate(2deg); } 78% { transform: scale(1.03) rotate(-1deg); } 100% { transform: scale(1); }
+}
+@keyframes letter-burst {
+  0% { opacity: 0; transform: translate(0, 0) scale(.3); }
+  12%, 65% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1); }
+}
+@keyframes hint { 50% { transform: translateY(-4px); } }
 
 /* Next-event cue */
 .scroll-cue {

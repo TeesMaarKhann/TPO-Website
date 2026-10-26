@@ -516,7 +516,8 @@
       : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>';
   }
 
-  // The first page: an illustrated letter addressed to the guest by name.
+  // The first page: a letter to the guest by name, next to the couple and
+  // their dog. Tapping the drawing makes it pop and throws a few flowers.
   function welcomeSection(list) {
     var sec = el('section', 'panel panel--letter');
     sec.id = 'ev-welcome';
@@ -524,10 +525,12 @@
     sec.dataset.tab = 'Welcome';
     sec.dataset.accent = '#c96f7d';
     sec.style.setProperty('--ev', '#c96f7d');
-    sec.appendChild(particles('flower'));
     sec.insertAdjacentHTML('beforeend',
       '<div class="letter">' +
-        '<img class="letter__art" src="assets/letter.webp" alt="Ishita and Sarvesh dancing, with their dog joining in" width="1250" height="2000">' +
+        '<button class="letter__art" type="button" aria-label="Ishita and Sarvesh dancing, with their dog joining in. Tap to make them twirl.">' +
+          '<img src="assets/letter-art.webp" alt="" width="1080" height="916">' +
+          '<span class="letter__hint" aria-hidden="true">tap us</span>' +
+        '</button>' +
         '<div class="letter__text">' +
           '<p class="letter__dear">Dear ' + esc(guest.name) + ',</p>' +
           '<img class="letter__divider" src="assets/letter-divider.webp" alt="" width="400" height="57">' +
@@ -535,6 +538,32 @@
           '<p>Here’s a little guide with all the tiny and not-so-tiny details, so you can focus on having the best time. (And probably shed a tear)</p>' +
         '</div>' +
       '</div>' + nextCue(list[0]));
+    var art = sec.querySelector('.letter__art');
+    art.addEventListener('click', function (e) {
+      art.classList.add('is-tapped');
+      art.classList.remove('is-popping');
+      void art.offsetWidth; // restart the animation on every tap
+      art.classList.add('is-popping');
+      if (reduceMotion) return;
+      var box = art.getBoundingClientRect();
+      var x = e.clientX ? e.clientX - box.left : box.width / 2;
+      var y = e.clientY ? e.clientY - box.top : box.height / 2;
+      var bits = ['marigold.svg', 'flower.webp', 'marigold-gold.svg', 'leaf-sage.svg', 'flower2.webp'];
+      for (var i = 0; i < 14; i++) {
+        var p = el('span', 'letter__burst');
+        var ang = (i / 14) * Math.PI * 2 + Math.random() * .5;
+        var dist = 70 + Math.random() * 90;
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.backgroundImage = 'url(assets/motifs/' + bits[i % bits.length] + ')';
+        p.style.setProperty('--x', Math.round(Math.cos(ang) * dist) + 'px');
+        p.style.setProperty('--y', Math.round(Math.sin(ang) * dist - 30) + 'px');
+        p.style.setProperty('--r', Math.round(Math.random() * 360 - 180) + 'deg');
+        p.style.setProperty('--size', Math.round(20 + Math.random() * 16) + 'px');
+        art.appendChild(p);
+        setTimeout(function (n) { n.remove(); }, 1300, p);
+      }
+    });
     return sec;
   }
 

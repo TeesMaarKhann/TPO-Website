@@ -73,9 +73,11 @@ types both, and the browser rebuilds the same key and looks it up.
   `window.Tinker.mount(element)`)
 - Images: `assets/`
 - The welcome letter: the words are written by `welcomeSection` in
-  `js/app.js`. The picture (`assets/letter.webp`) is the illustrated card
-  `assets/invite/letter.webp` with its words painted out, made by
-  `python3 tools/cut_letter.py`.
+  `js/app.js`. Phones show the drawing with the letter below it; computers
+  show the drawing on the left and the letter on the right. Tapping the
+  drawing makes it pop. The pictures (`assets/letter-*.webp`) are cut from the
+  illustrated card `assets/invite/letter.webp`, with its paper, border and
+  words removed, by `python3 tools/cut_letter.py`.
 - The small motifs floating behind each event (`assets/motifs`) are cut from
   the invites by `tools/cut_motifs.py`. Which set each event uses is
   `particles` in `js/data.js`.
