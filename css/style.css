@@ -175,7 +175,7 @@ a { color: inherit; }
   .gate__panel { margin-top: 0; padding: 0; }
 }
 
-/* ---------- Top bar: names left, IS logo centre, Stay/Tinker right ---------- */
+/* ---------- Top bar: names left, IS logo centre, menu right ---------- */
 
 .topbar {
   position: fixed; inset: 0 0 auto 0; z-index: 20;
@@ -194,27 +194,52 @@ a { color: inherit; }
 .brand__mono img { width: 100%; height: 100%; }
 .brand__mono:hover { transform: rotate(-8deg) scale(1.06); }
 
-.pages { display: flex; gap: 18px; justify-self: end; }
-.pages a {
-  position: relative; padding: .3rem 0; text-decoration: none;
+.menu { position: relative; justify-self: end; }
+.menu__btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  min-height: 44px; padding: .35rem .9rem .35rem 1rem; cursor: pointer;
+  border: 1.5px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, .5);
   font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--olive);
-  transition: color .25s;
+  transition: color .25s, border-color .25s, background .25s;
+  -webkit-tap-highlight-color: transparent;
 }
-.pages a::after {
-  content: ""; position: absolute; left: 50%; bottom: -2px; width: 5px; height: 5px; margin-left: -2.5px;
-  border-radius: 50%; background: var(--rose); transform: scale(0); transition: transform .3s var(--ease-bounce);
+.menu__btn:hover, .menu__btn[aria-expanded="true"] { color: var(--rose-deep); border-color: var(--rose); background: #fff; }
+.menu__chev {
+  width: 7px; height: 7px; margin-top: -3px;
+  border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  transition: transform .3s var(--ease-bounce), margin .3s;
 }
-.pages a:hover { color: var(--rose-deep); }
-.pages a.is-current { color: var(--rose-deep); }
-.pages a.is-current::after { transform: scale(1); }
+.menu__btn[aria-expanded="true"] .menu__chev { transform: rotate(-135deg); margin-top: 3px; }
+.menu__list {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+  min-width: 200px; margin: 0; padding: 8px; list-style: none;
+  background: var(--card); border-radius: 14px;
+  box-shadow: 0 14px 34px -14px rgba(63, 64, 51, .5), 0 0 0 1px rgba(107, 122, 69, .15);
+  transform-origin: top right;
+}
+.menu__list.is-open { animation: menu-in .28s var(--ease-out); }
+.menu__list a {
+  position: relative; display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .35rem .8rem;
+  border-radius: 9px; text-decoration: none;
+  font-family: var(--serif); font-style: italic; font-size: 1.08rem; color: var(--ink);
+  transition: background .2s, color .2s;
+}
+.menu__list a:hover { background: var(--paper); color: var(--rose-deep); }
+.menu__list a.is-current { color: var(--rose-deep); }
+.menu__list a.is-current::before {
+  content: ""; position: absolute; left: .3rem; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
+  border-radius: 50%; background: var(--rose);
+}
+.menu__sub a.is-current::before { left: 1.1rem; }
+.menu__sub a { padding-left: 1.7rem; font-size: .98rem; color: var(--muted); min-height: 40px; }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
 
 @media (max-width: 899px) {
   :root { --topbar: 70px; }
   .topbar { padding: 0 12px; gap: 8px; }
   .topbar__names img { height: auto; max-height: 20px; }
   .brand__mono { width: 62px; height: 62px; }
-  .pages { gap: 14px; }
-  .pages a { font-size: .98rem; }
+  .menu__btn { font-size: .98rem; padding: .3rem .75rem .3rem .85rem; min-height: 40px; }
 }
 
 /* ---------- 2. Events scroller ---------- */
@@ -322,12 +347,18 @@ main { padding-top: var(--topbar); }
   font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: var(--ev);
   transition: transform .25s var(--ease-bounce), letter-spacing .25s;
 }
+.art-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; column-gap: 1.1rem; }
+a.art-link { text-decoration: none; }
 .art-link__line { width: 34px; height: 1px; background: currentColor; opacity: .6; }
 .art-link:hover { letter-spacing: .02em; }
 .art-link:active { transform: scale(.96); }
 .art-note { margin: 0; font-style: italic; color: var(--olive); font-size: 1.02rem; line-height: 1.45; text-align: center; }
 .art-note__hi { display: block; color: var(--rose-deep); font-size: 1.15rem; }
 @media (max-width: 899px), (orientation: portrait) {
+  .m-actions .art-links { flex-wrap: nowrap; column-gap: 1.3rem; }
+  .m-actions .art-link__line { display: none; }
+  .m-actions .art-link { white-space: nowrap; padding-inline: 0; font-size: 1.08rem; }
+  .m-actions .art-link + .art-link::before { content: "·"; margin-right: -.1rem; margin-left: -.75rem; color: var(--muted); font-style: normal; }
   .m-actions .art-note { font-size: .9rem; line-height: 1.35; }
   .m-actions .art-note__hi { font-size: 1rem; }
 }
@@ -531,6 +562,86 @@ main { padding-top: var(--topbar); }
   .map-card { max-width: 52%; }
   .mp-when { font-size: .76rem; }
 }
+
+/* ---------- Itinerary: one day per block, a line down the middle like the tent card ---------- */
+
+.page--itinerary { max-width: 760px; }
+.itin__day { margin-top: 2.2rem; }
+.itin__date {
+  margin: 0 0 1rem; font-family: var(--serif); font-weight: 400;
+  font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; color: var(--olive);
+}
+.itin__list { list-style: none; margin: 0; padding: 0; position: relative; }
+.itin__list::before {
+  content: ""; position: absolute; top: 6px; bottom: 6px; left: 50%; width: 1.5px; margin-left: -.75px;
+  background: var(--sage); opacity: .7;
+}
+.itin__item {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+  min-height: 92px; padding: 6px 0;
+}
+.itin__item::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 1.5px; background: var(--sage); opacity: .7;
+}
+.itin__icon { width: 88px; height: 76px; object-fit: contain; }
+.itin__text { display: grid; justify-items: start; text-align: left; }
+.itin__what { margin: 0; font-family: var(--display); font-size: 1.5rem; line-height: 1.1; color: var(--ink); }
+.itin__time { margin: .15rem 0 0; letter-spacing: .06em; font-size: .95rem; color: var(--ink); }
+.itin__place {
+  font-size: .95rem; color: var(--rose-deep); text-decoration: underline; text-decoration-color: rgba(169, 86, 106, .35);
+  text-underline-offset: 3px; transition: text-decoration-color .2s;
+}
+.itin__place:hover { text-decoration-color: currentColor; }
+/* odd rows: icon left of the line, words right. Even rows: the other way. */
+.itin__item:nth-child(odd) .itin__icon { grid-column: 1; grid-row: 1; justify-self: end; margin-right: 26px; }
+.itin__item:nth-child(odd) .itin__text { grid-column: 2; grid-row: 1; padding-left: 26px; }
+.itin__item:nth-child(odd)::before { margin-left: 0; }
+.itin__item:nth-child(even) .itin__icon { grid-column: 2; grid-row: 1; justify-self: start; margin-left: 26px; }
+.itin__item:nth-child(even) .itin__text { grid-column: 1; grid-row: 1; justify-items: end; text-align: right; padding-right: 26px; }
+.itin__item:nth-child(even)::before { margin-left: -14px; }
+.view--page:not([hidden]) .itin__item { animation: rise .6s var(--ease-out) both; animation-delay: calc(.15s + var(--i, 0) * .05s); }
+@media (max-width: 600px) {
+  .itin__icon { width: 64px; height: 58px; }
+  .itin__item { min-height: 76px; }
+  .itin__what { font-size: 1.25rem; }
+  .itin__time, .itin__place { font-size: .85rem; }
+  .itin__item:nth-child(odd) .itin__icon { margin-right: 18px; }
+  .itin__item:nth-child(odd) .itin__text { padding-left: 18px; }
+  .itin__item:nth-child(even) .itin__icon { margin-left: 18px; }
+  .itin__item:nth-child(even) .itin__text { padding-right: 18px; }
+}
+
+/* ---------- Travel plans (under the Stay map) ---------- */
+
+.travel { max-width: 640px; margin: 2.4rem auto 0; scroll-margin-top: calc(var(--topbar) + 12px); outline: none; }
+.travel:empty { display: none; }
+.travel__title { color: var(--rose); font-size: clamp(2rem, 7vw, 2.8rem); margin-bottom: 1.2rem; }
+.travel__card {
+  margin-top: 14px; padding: 18px 18px 20px; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+}
+.travel__lead { margin: 0; color: var(--ink); }
+.travel__lead b { font-weight: 500; color: var(--rose-deep); }
+.travel__hubs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.travel__day {
+  margin: 14px 0 6px; font-family: var(--serif); font-weight: 400;
+  font-size: .82rem; letter-spacing: .16em; text-transform: uppercase; color: var(--olive);
+}
+.travel__day:first-of-type { margin-top: 4px; }
+.travel__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.travel__list li {
+  display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center;
+  padding: 6px 0 6px 12px; border-left: 2px solid var(--sage-soft);
+}
+.travel__when { grid-column: 1; font-size: .85rem; font-style: italic; color: var(--olive); }
+.travel__trip { grid-column: 1; color: var(--ink); line-height: 1.25; }
+.travel__for { grid-column: 1; font-size: .88rem; color: var(--muted); }
+.travel__go {
+  grid-column: 2; grid-row: 1 / span 3; white-space: nowrap;
+  color: var(--rose-deep); font-style: italic; text-underline-offset: 3px;
+}
+.travel__notes { margin: 0; padding-left: 1.1rem; color: var(--ink); }
+.travel__notes li + li { margin-top: .3rem; }
 
 /* ---------- Wardrobe dialog ---------- */
 

@@ -1,24 +1,26 @@
 // Everything a guest reads on the site. Edit here to change times, venues,
 // dress codes or map links.
 
+// `dest` is what Google Maps is asked for directions to. A name works; for an
+// exact pin use "latitude,longitude" (e.g. '18.5123,73.5123').
 window.PLACES = {
   P: {
     name: 'Palmwoods Retreat',
     short: 'Palmwoods',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/ki4RKuw3ReaCj8aw6'
+    dest: 'Palmwoods Retreat, Mulshi, Maharashtra'
   },
   G: {
     name: 'Golden Fields Resort',
     short: 'Golden Fields',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/wQJWP2f2YCCatVbEA'
+    dest: 'Golden Fields Resort, Khubavali, Mulshi, Maharashtra'
   },
   A: {
     name: 'Amora Resort',
     short: 'Amora',
     area: 'Mulshi',
-    url: 'https://maps.app.goo.gl/9heNv7naedXkmVqS8'
+    dest: 'Amora A Boutique Resort, Kolvan, Mulshi, Maharashtra'
   }
 };
 
@@ -114,3 +116,57 @@ window.EVENTS = [
     wardrobe: null
   }
 ];
+
+// The itinerary, from the tent cards. Each guest sees only the rows meant for
+// them:
+//   need: 'H' 'S' 'W' 'C'  - invited to that event
+//   need: 'R'              - staying at a resort
+//   with: 'HS'             - ...and also invited to at least one of these
+//                            (the Wednesday stay is only for Haldi/Sangeet guests)
+// place: 'P' 'G' 'A', or 'R' for the guest's own resort.
+window.ITINERARY = [
+  {
+    day: 'Wednesday', date: '9 December',
+    items: [
+      { time: '11:00 AM', what: 'Haldi',        icon: 'haldi',     place: 'P', need: 'H' },
+      { time: '02:00 PM', what: 'Lunch',        icon: 'plate',     place: 'P', need: 'H' },
+      { time: '02:30 PM', what: 'Check-in',     icon: 'check-in',  place: 'R', need: 'R', with: 'HS' },
+      { time: '04:30 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R', with: 'HS' },
+      { time: '07:00 PM', what: 'Sangeet',      icon: 'disco',     place: 'P', need: 'S' },
+      { time: '08:00 PM', what: 'Dinner',       icon: 'dinner',    place: 'P', need: 'S' }
+    ]
+  },
+  {
+    day: 'Thursday', date: '10 December',
+    items: [
+      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'P', need: 'R', with: 'HS' },
+      { time: '07:30 AM', what: 'Vidhi',        icon: 'vidhi',     place: 'G', need: 'W' },
+      { time: '10:30 AM', what: 'Baraat',       icon: 'horse',     place: 'G', need: 'W' },
+      { time: '12:19 PM', what: 'Mangalashtak', icon: 'mangalashtak', place: 'G', need: 'W' },
+      { time: '12:30 PM', what: 'Lunch',        icon: 'dinner',    place: 'G', need: 'W' },
+      { time: '04:00 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R' },
+      { time: '05:00 PM', what: 'Cocktail',     icon: 'cocktail',  place: 'P', need: 'C' },
+      { time: '08:00 PM', what: 'Dinner',       icon: 'dinner',    place: 'P', need: 'C' }
+    ]
+  },
+  {
+    day: 'Friday', date: '11 December',
+    items: [
+      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'R', need: 'R' },
+      { time: '11:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R' }
+    ]
+  }
+];
+
+// Travel plans on the Stay page. `from` are the usual starting points; each
+// becomes a "Directions from ..." link to the guest's first venue.
+// `notes` are shown as they are, e.g. shuttle timings:
+//   'A shuttle leaves Golden Fields for Palmwoods every 30 minutes from 6 pm.'
+window.TRAVEL = {
+  from: [
+    { label: 'Pune Airport', dest: 'Pune International Airport' },
+    { label: 'Pune Station', dest: 'Pune Junction railway station' },
+    { label: 'Mumbai', dest: 'Mumbai, Maharashtra' }
+  ],
+  notes: []
+};

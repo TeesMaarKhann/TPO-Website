@@ -243,9 +243,12 @@
     var gate = $('#gate');
     var app = $('#app');
     track(animate ? 'Logged in' : 'Came back');
-    document.querySelectorAll('[data-nav=stay]').forEach(function (a) { a.hidden = !hasStay(); });
+    document.querySelectorAll('.menu [data-nav=stay], .menu [data-nav=travel]').forEach(function (a) {
+      a.parentNode.hidden = !hasStay();
+    });
     buildEvents();
-    if (hasStay()) buildStay();
+    buildItinerary();
+    if (hasStay()) { buildStay(); buildTravel(); }
     window.Tinker.mount($('#game'));
     app.hidden = false;
     if (animate && !reduceMotion) {
@@ -257,28 +260,77 @@
     route();
   }
 
-  /* ---------- Routing between the three pages ---------- */
+  /* ---------- Routing between the pages ---------- */
+
+  var VIEWS = ['events', 'itinerary', 'stay', 'tinker'];
 
   function route() {
     var page = (location.hash || '#events').slice(1);
     if (page === 'signout') return signOut();  // handy for testing: open #signout
-    if (['events', 'stay', 'tinker'].indexOf(page) < 0 && !$('#ev-' + page)) page = 'events';
-    if (page === 'stay' && !hasStay()) page = 'events';
+    if (VIEWS.indexOf(page) < 0 && page !== 'travel' && !$('#ev-' + page)) page = 'events';
+    if ((page === 'stay' || page === 'travel') && !hasStay()) page = 'events';
     var isEvent = !!$('#ev-' + page);
-    var view = isEvent ? 'events' : page;
-    track('Opened', view.charAt(0).toUpperCase() + view.slice(1));
+    // Travel plans live at the bottom of the Stay page.
+    var view = isEvent ? 'events' : page === 'travel' ? 'stay' : page;
+    var nav = page === 'travel' ? 'travel' : view;
+    track('Opened', page === 'travel' ? 'Travel plans' : view.charAt(0).toUpperCase() + view.slice(1));
 
-    ['events', 'stay', 'tinker'].forEach(function (v) {
+    VIEWS.forEach(function (v) {
       $('#view-' + v).hidden = v !== view;
     });
     document.body.dataset.view = view;
     document.querySelectorAll('[data-nav]').forEach(function (a) {
-      a.classList.toggle('is-current', a.dataset.nav === view);
-      if (a.dataset.nav === view) a.setAttribute('aria-current', 'page');
+      var on = a.dataset.nav === nav;
+      a.classList.toggle('is-current', on);
+      if (on) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
+    closeMenu();
     if (isEvent) goTo(page, false);
-    if (view !== 'events') window.scrollTo(0, 0);
+    if (page === 'travel') {
+      var t = $('#travel');
+      requestAnimationFrame(function () {
+        t.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+        t.focus({ preventScroll: true });
+      });
+    } else if (view !== 'events') {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  /* ---------- Menu (top right) ---------- */
+
+  function initMenu() {
+    var btn = $('#menu-btn');
+    var list = $('#menu-list');
+    btn.addEventListener('click', function () {
+      if (list.hidden) openMenu(); else closeMenu();
+    });
+    list.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      // Same page picked again: hashchange won't fire, so close it here.
+      if (a && a.getAttribute('href') === location.hash) { closeMenu(); route(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!list.hidden && !e.target.closest('.menu')) closeMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !list.hidden) { closeMenu(); btn.focus(); }
+    });
+  }
+  function openMenu() {
+    var list = $('#menu-list');
+    list.hidden = false;
+    $('#menu-btn').setAttribute('aria-expanded', 'true');
+    void list.offsetWidth;
+    list.classList.add('is-open');
+  }
+  function closeMenu() {
+    var list = $('#menu-list');
+    if (!list || list.hidden) return;
+    list.hidden = true;
+    list.classList.remove('is-open');
+    $('#menu-btn').setAttribute('aria-expanded', 'false');
   }
 
   /* ---------- Events scroller ---------- */
@@ -486,8 +538,11 @@
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
       img: ev.card, alt: ev.cardAlt, particles: ev.particles,
-      actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
-        '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
+      actions: '<div class="art-links">' +
+        '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
+        '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner</button>' +
+        '<a class="art-link" href="' + WeddingMap.directions(ev.place) + '" target="_blank" rel="noopener" data-dir="' + esc(PLACES[ev.place].name) + '">' +
+        '<span>Directions&nbsp;↗</span><span aria-hidden="true" class="art-link__line"></span></a></div>',
       next: nextCue(list[i + 1])
     });
   }
@@ -504,6 +559,7 @@
         '<p class="outro__text">See you in Mulshi</p>' +
         '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
+          '<a class="btn btn--primary" href="#itinerary">Itinerary</a>' +
           (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
@@ -599,10 +655,134 @@
     WeddingMap.mount($('#map'), $('#map-panel'), { events: myEvents(), resort: guest.resort });
   }
 
+  /* ---------- Itinerary ---------- */
+
+  // The guest's own rows of ITINERARY, with 'R' swapped for their resort.
+  function myItinerary() {
+    var ev = guest.events, resort = PLACES[guest.resort] ? guest.resort : '';
+    return ITINERARY.map(function (d) {
+      var items = d.items.filter(function (it) {
+        var ok = it.need === 'R' ? !!resort : ev.indexOf(it.need) >= 0;
+        if (ok && it.with) ok = it.with.split('').some(function (c) { return ev.indexOf(c) >= 0; });
+        if (ok && it.place === 'R' && !resort) ok = false;
+        return ok;
+      }).map(function (it) {
+        return { time: it.time, what: it.what, icon: it.icon, place: it.place === 'R' ? resort : it.place };
+      });
+      return { day: d.day, date: d.date, items: items };
+    }).filter(function (d) { return d.items.length; });
+  }
+
+  function placeLink(k, cls) {
+    var p = PLACES[k];
+    return '<a class="' + cls + '" href="' + WeddingMap.directions(k) + '" target="_blank" rel="noopener" data-dir="' + esc(p.name) + '">' +
+      esc(p.name) + ' <span aria-hidden="true">↗</span></a>';
+  }
+
+  function buildItinerary() {
+    var days = myItinerary();
+    var mine = PLACES[guest.resort];
+    $('#itinerary-line').textContent = (mine ? 'You’re staying at ' + mine.name + '. ' : '') +
+      'Tap a place for directions.';
+    $('#itinerary').innerHTML = days.map(function (d) {
+      return '<section class="itin__day">' +
+        '<h3 class="itin__date">' + esc(d.day) + ', ' + esc(d.date) + '</h3>' +
+        '<ol class="itin__list">' + d.items.map(function (it, i) {
+          return '<li class="itin__item" style="--i:' + i + '">' +
+            '<img class="itin__icon" src="assets/itinerary/' + it.icon + '.webp" alt="" loading="lazy">' +
+            '<div class="itin__text">' +
+              '<p class="itin__what">' + esc(it.what) + '</p>' +
+              '<p class="itin__time">' + esc(it.time) + '</p>' +
+              placeLink(it.place, 'itin__place') +
+            '</div></li>';
+        }).join('') + '</ol></section>';
+    }).join('');
+  }
+
+  /* ---------- Travel plans (bottom of the Stay page) ---------- */
+
+  // Every time the guest needs to go somewhere else, worked out from their
+  // itinerary: arriving, moving between venues, back to the resort at night,
+  // and heading home.
+  function buildTravel() {
+    var days = myItinerary();
+    var box = $('#travel');
+    if (!days.length) { box.innerHTML = ''; return; }
+    var resort = PLACES[guest.resort] ? guest.resort : '';
+    var first = days[0].items[0];
+    var lastDay = days[days.length - 1];
+    var last = lastDay.items[lastDay.items.length - 1];
+
+    function short(k) { return esc(PLACES[k].short || PLACES[k].name); }
+    function trip(from, to) {
+      return '<a class="travel__go" href="' + WeddingMap.directions(to, from) + '" target="_blank" rel="noopener" data-dir="' +
+        esc(PLACES[from] ? PLACES[from].name : from) + ' → ' + esc(PLACES[to] ? PLACES[to].name : to) + '">Route <span aria-hidden="true">↗</span></a>';
+    }
+    function hubs(to, back) {
+      return '<div class="travel__hubs">' +
+        (back ? '' : '<a class="btn btn--primary btn--sm" href="' + WeddingMap.directions(to) + '" target="_blank" rel="noopener" data-dir="' + esc(PLACES[to].name) + '">From where you are ↗</a>') +
+        TRAVEL.from.map(function (h) {
+          var url = back ? WeddingMap.directions(h.dest, to) : WeddingMap.directions(to, h.dest);
+          return '<a class="btn btn--ghost btn--sm" href="' + url + '" target="_blank" rel="noopener" data-dir="' +
+            esc(back ? PLACES[to].name + ' → ' + h.label : h.label + ' → ' + PLACES[to].name) + '">' +
+            (back ? 'To ' : 'From ') + esc(h.label) + ' ↗</a>';
+        }).join('') + '</div>';
+    }
+
+    var moves = [];
+    days.forEach(function (d, i) {
+      var at = i > 0 && resort ? resort : first.place;
+      var rows = [];
+      d.items.forEach(function (it) {
+        if (it.place !== at) {
+          rows.push('<li><span class="travel__when">By ' + esc(it.time) + '</span>' +
+            '<span class="travel__trip">' + short(at) + ' → ' + short(it.place) + '</span>' +
+            '<span class="travel__for">for ' + esc(it.what) + '</span>' + trip(at, it.place) + '</li>');
+          at = it.place;
+        }
+      });
+      var end = d.items[d.items.length - 1];
+      if (resort && at !== resort && d !== lastDay) {
+        rows.push('<li><span class="travel__when">After ' + esc(end.what.toLowerCase()) + '</span>' +
+          '<span class="travel__trip">' + short(at) + ' → ' + short(resort) + '</span>' +
+          '<span class="travel__for">back to your stay</span>' + trip(at, resort) + '</li>');
+      }
+      if (rows.length) {
+        moves.push('<h4 class="travel__day">' + esc(d.day) + ', ' + esc(d.date) + '</h4><ol class="travel__list">' + rows.join('') + '</ol>');
+      }
+    });
+
+    box.innerHTML =
+      '<div class="ornament" aria-hidden="true"><span></span><i>❀</i><span></span></div>' +
+      '<h3 class="display travel__title">Travel plans</h3>' +
+      '<div class="travel__card">' +
+        '<p class="eyebrow">Getting here</p>' +
+        '<p class="travel__lead">Be at <b>' + esc(PLACES[first.place].name) + '</b> by <b>' + esc(first.time) + '</b> on ' +
+          esc(days[0].day) + ', ' + esc(days[0].date) + ' for ' + esc(first.what) + '.</p>' +
+        hubs(first.place) +
+      '</div>' +
+      (moves.length ? '<div class="travel__card"><p class="eyebrow">Getting around</p>' + moves.join('') + '</div>' : '') +
+      '<div class="travel__card">' +
+        '<p class="eyebrow">Heading home</p>' +
+        '<p class="travel__lead">After ' + esc(last.what.toLowerCase()) + ' at <b>' + esc(last.time) + '</b> on ' +
+          esc(lastDay.day) + ', ' + esc(lastDay.date) + ', from ' + esc(PLACES[last.place].name) + '.</p>' +
+        hubs(last.place, true) +
+      '</div>' +
+      (TRAVEL.notes.length ? '<div class="travel__card"><p class="eyebrow">Good to know</p><ul class="travel__notes">' +
+        TRAVEL.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></div>' : '');
+  }
+
+  // Log which directions guests open.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-dir]');
+    if (a) track('Opened directions', a.dataset.dir);
+  });
+
   /* ---------- Boot ---------- */
 
   initGate();
   initDialog();
+  initMenu();
   window.addEventListener('hashchange', function () { if (guest) route(); });
 
   var saved = load();
