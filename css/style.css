@@ -372,14 +372,6 @@ a.art-link { text-decoration: none; }
   .d-col .d-p { position: static; }
   .art-link { font-size: 1.3rem; }
 
-  /* Welcome: invitation line on top, the two families either side */
-  .w-head { left: 50%; top: 5%; height: 19%; max-width: 70vw; transform: translateX(-50%); }
-  .w-ish { left: 4%; top: 30%; height: 38%; width: 44vw; object-position: center; }
-  .w-sar { right: 4%; top: 30%; height: 38%; width: 44vw; object-position: center; }
-  .w-divider { position: absolute; left: 50%; top: 32%; height: 34%; width: 1px; background: linear-gradient(transparent, var(--rose), transparent); opacity: .6; }
-  .w-note { left: 50%; bottom: 10%; transform: translateX(-50%); width: min(640px, 80vw); }
-  .w-note .art-note { font-size: 1.2rem; }
-
   /* Haldi: the couple big along the bottom-left, the words on the right */
   .h-art { left: 0; bottom: 0; height: 74%; width: 62vw; object-position: left bottom; }
   .h-col { right: 5%; top: 50%; transform: translateY(-50%); width: 32vw; }
@@ -406,11 +398,34 @@ a.art-link { text-decoration: none; }
   }
   .c-col { right: 6%; top: 46%; }
 
-  .panel.is-active .d-view .w-head, .panel.is-active .d-view .w-note,
   .panel.is-active .d-view .h-col, .panel.is-active .d-view .wd-col { transform: translateX(-50%); }
   .panel.is-active .d-view .h-col, .panel.is-active .d-view .wd-col { transform: translateY(-50%); }
   .panel.is-active .d-view .c-art { transform: translateX(-50%); }
 }
+
+/* ---- Welcome: the illustrated letter, written to the guest by name ---- */
+.panel--letter { container-type: size; padding: 10px 16px 46px; }
+.letter {
+  position: relative; z-index: 1;
+  width: min(100cqw - 32px, (100cqh - 56px) * .625);
+  aspect-ratio: 1250 / 2000;
+  container-type: inline-size;
+  box-shadow: 0 22px 44px -28px rgba(70, 55, 35, .45);
+  opacity: 0; transform: translateY(36px);
+  transition: opacity .7s var(--ease-out), transform .9s var(--ease-out);
+}
+.panel.is-active .letter { opacity: 1; transform: none; }
+.letter__art { display: block; width: 100%; height: 100%; }
+.letter__text {
+  position: absolute; left: 10%; right: 10%; top: 51%; bottom: 8%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; font-family: var(--serif); font-style: italic;
+  color: #b8708f; font-size: 4.6cqw; line-height: 1.36; letter-spacing: -.01em;
+}
+.letter__text p { margin: 0; text-wrap: balance; }
+.letter__text p + p { margin-top: 1.5em; }
+.letter__dear { font-size: 5cqw; overflow-wrap: anywhere; }
+.letter__divider { width: 29%; height: auto; margin: 4.5cqw 0 7cqw; }
 
 /* Next-event cue */
 .scroll-cue {
@@ -441,7 +456,7 @@ a.art-link { text-decoration: none; }
 
 /* ---------- Scroll animation: pieces rise into place ---------- */
 
-.m-img, .m-actions, .d-p, .d-col, .w-divider,
+.m-img, .m-actions, .d-p, .d-col,
 .welcome > *, .outro > * {
   opacity: 0;
   transition: opacity .7s var(--ease-out), transform .9s var(--ease-out);
@@ -451,8 +466,8 @@ a.art-link { text-decoration: none; }
 .panel.is-active .welcome > *, .panel.is-active .outro > * { opacity: 1; transform: none; }
 .panel.is-active .m-actions { transition-delay: .25s; }
 @media (min-width: 900px) and (orientation: landscape) {
-  .d-p, .d-col, .w-divider { translate: 0 40px; transition: opacity .8s var(--ease-out), translate 1s var(--ease-out); }
-  .panel.is-active .d-p, .panel.is-active .d-col, .panel.is-active .w-divider { opacity: 1; translate: 0 0; }
+  .d-p, .d-col { translate: 0 40px; transition: opacity .8s var(--ease-out), translate 1s var(--ease-out); }
+  .panel.is-active .d-p, .panel.is-active .d-col { opacity: 1; translate: 0 0; }
   .panel.is-active .d-view > :nth-child(2) { transition-delay: .12s; }
   .panel.is-active .d-view > :nth-child(3) { transition-delay: .24s; }
   .panel.is-active .d-view > :nth-child(4) { transition-delay: .36s; }
