@@ -117,7 +117,7 @@ window.EVENTS = [
     times: ['5:30pm onwards'],
     place: 'P',
     card: 'assets/mobile/cocktail.webp',
-    cardAlt: 'Illustration for Toast & Tonic: Ishita and Sarvesh kiss under a giant wine glass while their golden retriever licks a spilled drink.',
+    cardAlt: 'Illustrated invite: Toast & Tonic. 10th December, 5:30pm onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c47f6e',
     particles: 'bubble',
     // No wardrobe page yet. Add one like the others when it's ready.
