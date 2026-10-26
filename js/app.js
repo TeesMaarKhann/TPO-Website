@@ -26,52 +26,95 @@
 
   /* ---------- Guest lookup (must match tools/build_guests.py) ---------- */
 
-  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'family', 'mr', 'mrs', 'ms', 'dr'];
+  // Words that are never someone's own name: relations, titles, nicknames.
+  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'dad',
+    'mom', 'family', 'mr', 'mrs', 'ms', 'dr', 'kaka', 'kaku', 'ajji', 'aji', 'aaji',
+    'mama', 'mami', 'mavshi', 'maushi', 'atya', 'bhai', 'toddler'];
 
   function nameWords(name) {
     name = name.toLowerCase().replace(/\(.*?\)/g, ' ').trim().replace(/^\w+_\s*/, '');
     return name.match(/[a-z]+/g) || [];
   }
-  // Full name (word order ignored), then the first name on its own.
-  function nameKeys(name) {
-    var w = nameWords(name);
-    var keys = [];
-    if (w.length) {
-      keys.push(w.slice().sort().join(' '));
-      if (w.length > 1 && w[0].length > 1 && NOT_NAMES.indexOf(w[0]) < 0) keys.push(w[0]);
-    }
-    return keys;
+  function realWords(w) {
+    return w.filter(function (x, i) {
+      return x.length > 1 && NOT_NAMES.indexOf(x) < 0 && w.indexOf(x) === i;
+    });
+  }
+  function fullKey(name) {
+    return nameWords(name).sort().join(' ');
   }
   function normPhone(phone) {
-    var d = String(phone || '').replace(/\D/g, '');
+    var d = String(phone || '').split(/[\/,;]/)[0].replace(/\D/g, '');
     return d.length >= 8 ? d.slice(-10) : '';
   }
 
   // Slow on purpose (PBKDF2, GUESTS.iter rounds) so the list can't be guessed.
-  function deriveKey(text) {
+  function derive(text, bytes) {
     var enc = new TextEncoder();
     return crypto.subtle.importKey('raw', enc.encode(text), 'PBKDF2', false, ['deriveBits'])
       .then(function (k) {
         return crypto.subtle.deriveBits(
-          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, 96);
+          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, bytes * 8);
       })
-      .then(function (bits) {
-        return Array.prototype.map.call(new Uint8Array(bits), function (b) {
-          return ('0' + b.toString(16)).slice(-2);
-        }).join('');
-      });
+      .then(function (bits) { return new Uint8Array(bits); });
+  }
+  function hex(bytes) {
+    return Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
   }
 
-  // Resolves to [events, resort] or null. Needs both name and phone.
+  // For guests with no number of their own: whose number to use ('' = none yet).
+  // Stored encrypted with their name, so only someone who types it can read it.
+  function findHint(full) {
+    if (!GUESTS.h) return Promise.resolve(null);
+    return derive('?' + full, 44).then(function (b) {
+      var c = GUESTS.h[hex(b.subarray(0, 12))];
+      if (!c) return null;
+      var out = new Uint8Array(32);
+      for (var i = 0; i < 32; i++) out[i] = parseInt(c.substr(i * 2, 2), 16) ^ b[12 + i];
+      return new TextDecoder().decode(out).replace(/\0+$/, '');
+    });
+  }
+
+  // Resolves to one of:
+  //   { match: [events, resort], first: 'dilip' }  found them
+  //   { ask: true }    typed only a surname: ask for first name and surname
+  //   { hint: 'Kirit Shah' }   on the list, but needs that person's number
+  //   { hint: '' }     on the list, but no number for them in the sheet
+  //   null             not found
+  // A guest's first name or full name works; a surname (key "~word") only
+  // works when typed with another name.
   function findGuest(name, phone) {
     var p = normPhone(phone);
-    var keys = nameKeys(name);
-    if (!p || !keys.length || !window.crypto || !crypto.subtle) return Promise.resolve(null);
-    return keys.reduce(function (found, n) {
-      return found.then(function (hit) {
-        return hit || deriveKey(n + '|' + p).then(function (k) { return GUESTS.g[k] || null; });
-      });
-    }, Promise.resolve(null));
+    var full = fullKey(name);
+    var w = realWords(nameWords(name));
+    if (!p || !full || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+    var tries = [];
+    if (w.length <= 1) {
+      tries.push({ key: w[0] || full, first: w[0] });
+    } else {
+      tries.push({ key: full });
+      w.forEach(function (x) { tries.push({ key: x, first: x }); });
+      w.forEach(function (x) { tries.push({ key: '~' + x }); });
+    }
+    var single = w.length === 1 ? derive('~' + w[0] + '|' + p, 12) : Promise.resolve(null);
+    // All at once: the browser runs them in parallel.
+    return Promise.all([
+      Promise.all(tries.map(function (t) { return derive(t.key + '|' + p, 12); })),
+      single
+    ]).then(function (res) {
+      var hits = res[0].map(function (b) { return GUESTS.g[hex(b)]; });
+      for (var i = 0; i < tries.length; i++) {
+        if (!hits[i]) continue;
+        // Greet them by whichever typed word is a first name on the list.
+        var first = w[0];
+        for (var j = 0; j < tries.length; j++) {
+          if (hits[j] && tries[j].first) { first = tries[j].first; break; }
+        }
+        return { match: hits[i], first: first };
+      }
+      if (res[1] && GUESTS.g[hex(res[1])]) return { ask: true };
+      return findHint(full).then(function (h) { return h == null ? null : { hint: h }; });
+    });
   }
 
   function save(g, name, phone) {
@@ -125,6 +168,7 @@
   /* ---------- Home / gate ---------- */
 
   function initGate() {
+    $('#gate').appendChild(particles('flower', 10));
     var form = $('#gate-form');
     var err = $('#gate-error');
     form.addEventListener('submit', function (e) {
@@ -139,15 +183,34 @@
       btn.disabled = true;
       btn.textContent = 'Checking the guest list…';
       err.hidden = true;
-      findGuest(name, phone).then(function (match) {
+      findGuest(name, phone).then(function (found) {
         btn.disabled = false;
         btn.innerHTML = label;
-        if (!match) {
-          track('Couldn’t log in', '', name);
-          return showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+        if (found && found.match) {
+          login(name, phone, found);
+          return enter(true);
         }
-        login(name, phone, match);
-        enter(true);
+        track('Couldn’t log in', '', name);
+        if (found && found.ask) {
+          $('#g-name').focus();
+          return showErr('Please type your first name and surname.');
+        }
+        if (found && found.hint) {
+          return showErr('Welcome ' + firstName(realWords(nameWords(name))[0] || name) + '!\n' +
+            'Please use ' + found.hint + '’s number to log in.');
+        }
+        if (found) {
+          return showErr('Welcome ' + firstName(realWords(nameWords(name))[0] || name) + '!\n' +
+            'Please contact Ishita or Sarvesh to log in.');
+        }
+        if (realWords(nameWords(name)).length < 2) {
+          return showErr('We couldn’t find you. Try your first name and surname, with the number your invite was sent to.');
+        }
+        showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+      }).catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = label;
+        showErr('Something went wrong. Please try again.');
       });
     });
 
@@ -160,8 +223,9 @@
     }
   }
 
-  function login(name, phone, match) {
-    guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+  function login(name, phone, found) {
+    var match = found.match;
+    guest = { name: firstName(found.first || name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
     save(guest, name, phone);
   }
 
@@ -214,13 +278,7 @@
       else a.removeAttribute('aria-current');
     });
     if (isEvent) goTo(page, false);
-    if (view !== 'events') {
-      window.scrollTo(0, 0);
-      document.body.style.setProperty('--page', PAPER);
-    } else {
-      var act = document.querySelector('.panel.is-active');
-      if (act) document.body.style.setProperty('--page', act.style.getPropertyValue('--bg') || PAPER);
-    }
+    if (view !== 'events') window.scrollTo(0, 0);
   }
 
   /* ---------- Events scroller ---------- */
@@ -311,7 +369,7 @@
     });
     track('Saw', 'Events › ' + sec.dataset.tab);
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
-    document.body.style.setProperty('--page', sec.style.getPropertyValue('--bg') || PAPER);
+    if (sec.dataset.key === 'end') countdown(sec);
   }
 
   function goTo(key, smooth) {
@@ -322,38 +380,35 @@
 
   // The pieces that float up behind each panel are the small motifs from the
   // invites' own backgrounds (assets/motifs, cut by tools/cut_motifs.py).
-  // [file, smallest size, largest size in px]
+  // [file, smallest size, largest size in px]. 'bubble' is drawn in CSS.
   var MOTIFS = {
-    flower:   [['flower', 14, 24]],
-    haldi:    [['flower2', 14, 24]],
+    flower:   [['flower', 14, 24], ['flower2', 14, 22]],
     sparkle:  [['sparkle', 14, 26], ['sparkle2', 12, 22]],
-    marigold: [['marigold.svg', 24, 44], ['leaf.svg', 16, 30]],
-    bulb:     [['bulb', 16, 30]],
-    mix:      [['flower', 14, 22], ['sparkle', 14, 22], ['marigold.svg', 20, 34], ['bulb', 16, 26]]
+    marigold: [['marigold-gold.svg', 18, 32], ['marigold.svg', 20, 34], ['leaf-sage.svg', 14, 24]],
+    bubble:   [['bubble', 8, 22]],
+    mix:      [['flower', 14, 22], ['sparkle', 14, 22], ['marigold.svg', 20, 32], ['flower2', 14, 22]]
   };
 
-  function particles(kind) {
+  function particles(kind, count) {
     var set = MOTIFS[kind] || MOTIFS.flower;
     var wrap = el('div', 'particles particles--' + kind);
     wrap.setAttribute('aria-hidden', 'true');
-    for (var i = 0; i < 14; i++) {
+    for (var i = 0; i < (count || 12); i++) {
       var m = set[i % set.length];
       var file = m[0].indexOf('.') < 0 ? m[0] + '.webp' : m[0];
       var p = el('span');
-      p.style.backgroundImage = 'url(assets/motifs/' + file + ')';
+      if (m[0] !== 'bubble') p.style.backgroundImage = 'url(assets/motifs/' + file + ')';
+      p.style.setProperty('--o', (0.45 + Math.random() * 0.35).toFixed(2));
       p.style.left = (2 + Math.random() * 94) + '%';
       p.style.animationDelay = (-Math.random() * 12).toFixed(2) + 's';
       p.style.animationDuration = (9 + Math.random() * 7).toFixed(2) + 's';
       p.style.setProperty('--size', Math.round(m[1] + Math.random() * (m[2] - m[1])) + 'px');
       p.style.setProperty('--drift', (Math.random() * 60 - 30).toFixed(0) + 'px');
-      p.style.setProperty('--spin', (Math.random() < .5 ? -1 : 1) * Math.round(90 + Math.random() * 180) + 'deg');
+      p.style.setProperty('--spin', m[0] === 'bubble' ? '0deg' : (Math.random() < .5 ? -1 : 1) * Math.round(90 + Math.random() * 180) + 'deg');
       wrap.appendChild(p);
     }
     return wrap;
   }
-
-  // Paper colour of each invite, so the page around the artwork matches it.
-  var PAPER = '#ebe9e5';
 
   // Desktop: each invite split into pieces (assets/desk) and spread across
   // the page. Phones: the whole invite on one screen.
@@ -380,7 +435,7 @@
           '<div class="d-col wd-col">' + img('wedding-title', 'wd-title', 'Phera Pheri') +
           img('wedding-text', 'wd-text', '10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.') + actions + '</div>';
       case 'cocktail':
-        return '<img class="d-p c-art" src="assets/invite/cocktail.jpg" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
+        return '<img class="d-p c-art" src="assets/mobile/cocktail.webp" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
           '<div class="d-col c-col">' + actions + '</div>';
     }
     return '';
@@ -393,7 +448,6 @@
     sec.dataset.tab = opts.tab;
     sec.dataset.accent = opts.accent;
     sec.style.setProperty('--ev', opts.accent);
-    sec.style.setProperty('--bg', opts.paper || PAPER);
     sec.appendChild(particles(opts.particles));
     var wrap = el('div', 'art-wrap');
     wrap.innerHTML =
@@ -420,7 +474,7 @@
       : names[0];
     return artPanel({
       key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
-      img: 'assets/invite/family.jpg', eager: true, particles: 'flower',
+      img: 'assets/mobile/family.webp', eager: true, particles: 'flower',
       alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
       actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
         'We’d love you with us for ' + esc(invited) + '.</p>',
@@ -431,7 +485,7 @@
   function eventSection(ev, i, list) {
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
-      paper: ev.paper, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
+      img: ev.card, alt: ev.cardAlt, particles: ev.particles,
       actions: '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
         '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner<span aria-hidden="true" class="art-link__line"></span></button>',
       next: nextCue(list[i + 1])
@@ -448,6 +502,7 @@
       '<div class="outro">' +
         '<h2 class="display outro__title">1+1=3</h2>' +
         '<p class="outro__text">See you in Mulshi</p>' +
+        '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
           (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
@@ -455,6 +510,40 @@
       '</div>';
     sec.appendChild(particles('mix'));
     return sec;
+  }
+
+  // Days until the guest's first event, counted up once when the last page
+  // first comes into view.
+  function countdown(sec) {
+    var box = sec.querySelector('.countdown');
+    if (!box || box.dataset.done) return;
+    box.dataset.done = '1';
+    var first = myEvents()[0];
+    if (!first || !first.on) return;
+    var p = first.on.split('-');
+    var day = new Date(+p[0], p[1] - 1, +p[2]);
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var days = Math.round((day - now) / 864e5);
+    if (days < 0) return;
+    var num = box.querySelector('b');
+    var label = box.querySelector('span');
+    if (days === 0) {
+      num.textContent = '';
+      label.textContent = 'Today’s the day!';
+      box.hidden = false;
+      return;
+    }
+    label.textContent = days === 1 ? 'day to go' : 'days to go';
+    box.hidden = false;
+    if (reduceMotion) { num.textContent = days; return; }
+    var start = null, dur = Math.min(1600, 500 + days * 20);
+    function tick(t) {
+      if (start === null) start = t;
+      var k = Math.min(1, (t - start) / dur);
+      num.textContent = Math.round(days * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick);
+    }
+    setTimeout(function () { requestAnimationFrame(tick); }, 500);
   }
 
   /* ---------- Wardrobe planner popup ---------- */
@@ -525,9 +614,9 @@
     // The guest list was rebuilt since this device last logged in: check the
     // saved name and number against the new list without asking again.
     $('#gate').hidden = true;
-    findGuest(typed.name, typed.phone).then(function (match) {
-      if (match) {
-        login(typed.name, typed.phone, match);
+    findGuest(typed.name, typed.phone).catch(function () { return null; }).then(function (found) {
+      if (found && found.match) {
+        login(typed.name, typed.phone, found);
         enter(false);
       } else {
         $('#g-name').value = typed.name;
