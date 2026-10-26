@@ -472,12 +472,6 @@
       return '<img class="d-p ' + cls + '" src="assets/desk/' + name + '.webp" alt="' + esc(alt || '') + '" loading="lazy">';
     }
     switch (key) {
-      case 'welcome':
-        return img('family-head', 'w-head', 'Shah and Gujarathi families invite you to join us as we celebrate') +
-          img('family-ishita', 'w-ish', 'Ishita. Granddaughter of Lt. Narayan and Lt. Shanta Arolkar and Shri. Kirit and Smt. Nayana Shah. Daughter of Mr. Nilesh and Mrs. Suchitra Shah.') +
-          '<span class="w-divider" aria-hidden="true"></span>' +
-          img('family-sarvesh', 'w-sar', 'Sarvesh. Grandson of Shri. Chintamani and Lt. Chitra Rahatekar and Lt. Chotalal and Smt. Prabha Gujarathi. Son of Lt. Manish and Mrs. Neha Gujarathi.') +
-          '<div class="d-col w-note">' + actions + '</div>';
       case 'haldi':
         return img('haldi-art', 'h-art') +
           '<div class="d-col h-col">' + img('haldi-text', 'h-text', 'Yello! Haldi and Welcome Lunch to kick things off. 9th December, 11 am onwards. Palmwoods Retreat, Mulshi.') + actions + '</div>';
@@ -522,19 +516,53 @@
       : '<button class="scroll-cue scroll-cue--next" type="button" data-next="end">One more thing <span aria-hidden="true">↓</span></button>';
   }
 
+  // The first page: a letter to the guest by name, next to the couple and
+  // their dog. Tapping the drawing makes it pop and throws a few flowers.
   function welcomeSection(list) {
-    var names = list.map(function (e) { return e.tab; });
-    var invited = names.length > 1
-      ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]
-      : names[0];
-    return artPanel({
-      key: 'welcome', tab: 'Welcome', cls: 'panel--welcome', accent: '#c96f7d',
-      img: 'assets/mobile/family.webp', eager: true, particles: 'flower',
-      alt: 'Shah and Gujarathi families invite you to join us as we celebrate Ishita, daughter of Mr. Nilesh and Mrs. Suchitra Shah, and Sarvesh, son of Lt. Manish and Mrs. Neha Gujarathi.',
-      actions: '<p class="art-note"><span class="art-note__hi">Hello ' + esc(guest.name) + '!</span>' +
-        'We’d love you with us for ' + esc(invited) + '.</p>',
-      next: nextCue(list[0])
+    var sec = el('section', 'panel panel--letter');
+    sec.id = 'ev-welcome';
+    sec.dataset.key = 'welcome';
+    sec.dataset.tab = 'Welcome';
+    sec.dataset.accent = '#c96f7d';
+    sec.style.setProperty('--ev', '#c96f7d');
+    sec.insertAdjacentHTML('beforeend',
+      '<div class="letter">' +
+        '<button class="letter__art" type="button" aria-label="Ishita and Sarvesh dancing, with their dog joining in. Tap to make them twirl.">' +
+          '<img src="assets/letter-art.webp" alt="" width="1138" height="916">' +
+        '</button>' +
+        '<div class="letter__text">' +
+          '<p class="letter__dear">Dear ' + esc(guest.name) + ',</p>' +
+          '<img class="letter__divider" src="assets/letter-divider.webp" alt="" width="400" height="57">' +
+          '<p>It’s almost that special time, and we’re so happy to have you with us.</p>' +
+          '<p>Here’s a little guide with all the tiny and not-so-tiny details, so you can focus on having the best time. (And probably shed a tear)</p>' +
+        '</div>' +
+      '</div>' + nextCue(list[0]));
+    var art = sec.querySelector('.letter__art');
+    art.addEventListener('click', function (e) {
+      art.classList.remove('is-popping');
+      void art.offsetWidth; // restart the animation on every tap
+      art.classList.add('is-popping');
+      if (reduceMotion) return;
+      var box = art.getBoundingClientRect();
+      var x = e.clientX ? e.clientX - box.left : box.width / 2;
+      var y = e.clientY ? e.clientY - box.top : box.height / 2;
+      var bits = ['marigold.svg', 'flower.webp', 'marigold-gold.svg', 'leaf-sage.svg', 'flower2.webp'];
+      for (var i = 0; i < 14; i++) {
+        var p = el('span', 'letter__burst');
+        var ang = (i / 14) * Math.PI * 2 + Math.random() * .5;
+        var dist = 70 + Math.random() * 90;
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.backgroundImage = 'url(assets/motifs/' + bits[i % bits.length] + ')';
+        p.style.setProperty('--x', Math.round(Math.cos(ang) * dist) + 'px');
+        p.style.setProperty('--y', Math.round(Math.sin(ang) * dist - 30) + 'px');
+        p.style.setProperty('--r', Math.round(Math.random() * 360 - 180) + 'deg');
+        p.style.setProperty('--size', Math.round(20 + Math.random() * 16) + 'px');
+        art.appendChild(p);
+        setTimeout(function (n) { n.remove(); }, 1300, p);
+      }
     });
+    return sec;
   }
 
   function eventSection(ev, i, list) {

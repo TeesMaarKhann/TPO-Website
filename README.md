@@ -10,7 +10,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 ## Pages
 
 1. **Home** – the invite cover. Guests type their name and phone number.
-2. **Events** – a snap-scrolling list of only the events that guest is invited
+2. **Events** – opens on a welcome letter addressed to the guest by name
+   ("Dear Sarvesh,"), then a snap-scrolling list of only the events that guest is invited
    to, with tabs on top and a wardrobe planner popup per event.
 3. **Itinerary** – the tent-card schedule, one tab per day, cut down to that
    guest: only their events, and check-in, hi-tea, breakfast and check-out at
@@ -71,6 +72,12 @@ types both, and the browser rebuilds the same key and looks it up.
 - The game: `js/tinker.js` (replace it with any game that exposes
   `window.Tinker.mount(element)`)
 - Images: `assets/`
+- The welcome letter: the words are written by `welcomeSection` in
+  `js/app.js`. Phones show the drawing with the letter below it; computers
+  show the drawing on the left and the letter on the right. Tapping the
+  drawing makes it pop. The pictures (`assets/letter-*.webp`) are cut from the
+  illustrated card `assets/invite/letter.webp`, with its paper, border and
+  words removed, by `python3 tools/cut_letter.py`.
 - The small motifs floating behind each event (`assets/motifs`) are cut from
   the invites by `tools/cut_motifs.py`. Which set each event uses is
   `particles` in `js/data.js`.
