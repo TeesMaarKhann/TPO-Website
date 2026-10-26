@@ -53,6 +53,12 @@ types both, and the browser rebuilds the same key and looks it up.
 - The small motifs floating behind each event (`assets/motifs`) are cut from
   the invites by `tools/cut_motifs.py`. Which set each event uses is
   `particles` in `js/data.js`.
+- Phones show the invites from `assets/mobile`: the same images as
+  `assets/invite` with the paper made see-through, so every page sits on one
+  cream background (`--paper` in `css/style.css`). After changing an invite,
+  rebuild them with `python3 tools/cut_mobile.py assets/invite assets/mobile`.
+- The countdown on the last page counts to the guest's first event (`on` in
+  `js/data.js`).
 
 ## Fonts
 
