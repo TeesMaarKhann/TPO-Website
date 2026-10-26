@@ -175,7 +175,7 @@ a { color: inherit; }
   .gate__panel { margin-top: 0; padding: 0; }
 }
 
-/* ---------- Top bar: names left, IS logo centre, Stay/Tinker right ---------- */
+/* ---------- Top bar: names left, IS logo centre, menu right ---------- */
 
 .topbar {
   position: fixed; inset: 0 0 auto 0; z-index: 20;
@@ -194,27 +194,52 @@ a { color: inherit; }
 .brand__mono img { width: 100%; height: 100%; }
 .brand__mono:hover { transform: rotate(-8deg) scale(1.06); }
 
-.pages { display: flex; gap: 18px; justify-self: end; }
-.pages a {
-  position: relative; padding: .3rem 0; text-decoration: none;
+.menu { position: relative; justify-self: end; }
+.menu__btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  min-height: 44px; padding: .35rem .9rem .35rem 1rem; cursor: pointer;
+  border: 1.5px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, .5);
   font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--olive);
-  transition: color .25s;
+  transition: color .25s, border-color .25s, background .25s;
+  -webkit-tap-highlight-color: transparent;
 }
-.pages a::after {
-  content: ""; position: absolute; left: 50%; bottom: -2px; width: 5px; height: 5px; margin-left: -2.5px;
-  border-radius: 50%; background: var(--rose); transform: scale(0); transition: transform .3s var(--ease-bounce);
+.menu__btn:hover, .menu__btn[aria-expanded="true"] { color: var(--rose-deep); border-color: var(--rose); background: #fff; }
+.menu__chev {
+  width: 7px; height: 7px; margin-top: -3px;
+  border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  transition: transform .3s var(--ease-bounce), margin .3s;
 }
-.pages a:hover { color: var(--rose-deep); }
-.pages a.is-current { color: var(--rose-deep); }
-.pages a.is-current::after { transform: scale(1); }
+.menu__btn[aria-expanded="true"] .menu__chev { transform: rotate(-135deg); margin-top: 3px; }
+.menu__list {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+  min-width: 200px; margin: 0; padding: 8px; list-style: none;
+  background: var(--card); border-radius: 14px;
+  box-shadow: 0 14px 34px -14px rgba(63, 64, 51, .5), 0 0 0 1px rgba(107, 122, 69, .15);
+  transform-origin: top right;
+}
+.menu__list.is-open { animation: menu-in .28s var(--ease-out); }
+.menu__list a {
+  position: relative; display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .35rem .8rem;
+  border-radius: 9px; text-decoration: none;
+  font-family: var(--serif); font-style: italic; font-size: 1.08rem; color: var(--ink);
+  transition: background .2s, color .2s;
+}
+.menu__list a:hover { background: var(--paper); color: var(--rose-deep); }
+.menu__list a.is-current { color: var(--rose-deep); }
+.menu__list a.is-current::before {
+  content: ""; position: absolute; left: .3rem; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
+  border-radius: 50%; background: var(--rose);
+}
+.menu__sub a.is-current::before { left: 1.1rem; }
+.menu__sub a { padding-left: 1.7rem; font-size: .98rem; color: var(--muted); min-height: 40px; }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
 
 @media (max-width: 899px) {
   :root { --topbar: 70px; }
   .topbar { padding: 0 12px; gap: 8px; }
   .topbar__names img { height: auto; max-height: 20px; }
   .brand__mono { width: 62px; height: 62px; }
-  .pages { gap: 14px; }
-  .pages a { font-size: .98rem; }
+  .menu__btn { font-size: .98rem; padding: .3rem .75rem .3rem .85rem; min-height: 40px; }
 }
 
 /* ---------- 2. Events scroller ---------- */
@@ -322,12 +347,18 @@ main { padding-top: var(--topbar); }
   font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: var(--ev);
   transition: transform .25s var(--ease-bounce), letter-spacing .25s;
 }
+.art-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; column-gap: 1.1rem; }
+a.art-link { text-decoration: none; }
 .art-link__line { width: 34px; height: 1px; background: currentColor; opacity: .6; }
 .art-link:hover { letter-spacing: .02em; }
 .art-link:active { transform: scale(.96); }
 .art-note { margin: 0; font-style: italic; color: var(--olive); font-size: 1.02rem; line-height: 1.45; text-align: center; }
 .art-note__hi { display: block; color: var(--rose-deep); font-size: 1.15rem; }
 @media (max-width: 899px), (orientation: portrait) {
+  .m-actions .art-links { flex-wrap: nowrap; column-gap: 1.3rem; }
+  .m-actions .art-link__line { display: none; }
+  .m-actions .art-link { white-space: nowrap; padding-inline: 0; font-size: 1.08rem; }
+  .m-actions .art-link + .art-link::before { content: "·"; margin-right: -.1rem; margin-left: -.75rem; color: var(--muted); font-style: normal; }
   .m-actions .art-note { font-size: .9rem; line-height: 1.35; }
   .m-actions .art-note__hi { font-size: 1rem; }
 }
@@ -531,6 +562,125 @@ main { padding-top: var(--topbar); }
   .map-card { max-width: 52%; }
   .mp-when { font-size: .76rem; }
 }
+
+/* ---------- Itinerary: one day per block, a line down the middle like the tent card ---------- */
+
+.page--itinerary { max-width: 760px; }
+.itin__tabs {
+  display: flex; justify-content: center; gap: clamp(24px, 9vw, 64px);
+  margin: 2rem auto 0; padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+  max-width: 520px;
+}
+.itin__tab {
+  position: relative; display: grid; justify-items: center; gap: 3px;
+  padding: .5rem .25rem 1rem; border: 0; background: none; cursor: pointer;
+  color: var(--muted); transition: color .25s;
+  -webkit-tap-highlight-color: transparent;
+}
+.itin__tab::after {
+  content: ""; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; margin-left: -3px;
+  border-radius: 50%; background: var(--rose); transform: scale(0); transition: transform .3s var(--ease-bounce);
+}
+.itin__tab-day { font-family: var(--serif); font-style: italic; font-size: 1.02rem; line-height: 1.15; }
+.itin__tab-date { font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
+.itin__tab:hover { color: var(--olive); }
+.itin__tab[aria-selected="true"] { color: var(--rose-deep); }
+.itin__tab[aria-selected="true"]::after { transform: scale(1); }
+.itin__day { margin-top: 2.4rem; }
+.itin__day:not([hidden]) { animation: rise .45s var(--ease-out) both; }
+.itin__list { list-style: none; margin: 0; padding: 0; position: relative; }
+.itin__list::before {
+  content: ""; position: absolute; top: 6px; bottom: 6px; left: 50%; width: 1.5px; margin-left: -.75px;
+  background: var(--sage); opacity: .7;
+}
+.itin__item {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+  min-height: 92px; padding: 6px 0;
+}
+.itin__item::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 1.5px; background: var(--sage); opacity: .7;
+}
+.itin__icon { width: 88px; height: 76px; object-fit: contain; }
+.itin__text { display: grid; justify-items: start; text-align: left; }
+.itin__what { margin: 0; font-family: var(--display); font-size: 1.5rem; line-height: 1.1; color: var(--ink); }
+.itin__time { margin: .15rem 0 0; letter-spacing: .06em; font-size: .95rem; color: var(--ink); }
+.itin__place { margin: 0; font-size: .95rem; color: var(--olive); font-style: italic; }
+.itin__item { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.itin__item .itin__icon, .itin__item .itin__text { transition: transform .25s var(--ease-bounce); }
+.itin__item:hover .itin__icon { transform: scale(1.06) rotate(-3deg); }
+.itin__item.is-pop .itin__icon { animation: itin-pop .55s var(--ease-bounce); }
+.itin__item.is-pop .itin__text { animation: itin-nudge .55s var(--ease-bounce); }
+@keyframes itin-pop { 0% { transform: scale(1); } 35% { transform: scale(1.22) rotate(-6deg); } 100% { transform: scale(1); } }
+@keyframes itin-nudge { 35% { transform: scale(1.06); } }
+/* odd rows: icon left of the line, words right. Even rows: the other way. */
+.itin__item:nth-child(odd) .itin__icon { grid-column: 1; grid-row: 1; justify-self: end; margin-right: 26px; }
+.itin__item:nth-child(odd) .itin__text { grid-column: 2; grid-row: 1; padding-left: 26px; }
+.itin__item:nth-child(odd)::before { margin-left: 0; }
+.itin__item:nth-child(even) .itin__icon { grid-column: 2; grid-row: 1; justify-self: start; margin-left: 26px; }
+.itin__item:nth-child(even) .itin__text { grid-column: 1; grid-row: 1; justify-items: end; text-align: right; padding-right: 26px; }
+.itin__item:nth-child(even)::before { margin-left: -14px; }
+.view--page:not([hidden]) .itin__item { animation: rise .6s var(--ease-out) both; animation-delay: calc(.15s + var(--i, 0) * .05s); }
+@media (max-width: 600px) {
+  .itin__icon { width: 64px; height: 58px; }
+  .itin__item { min-height: 76px; }
+  .itin__what { font-size: 1.25rem; }
+  .itin__time, .itin__place { font-size: .85rem; }
+  .itin__item:nth-child(odd) .itin__icon { margin-right: 18px; }
+  .itin__item:nth-child(odd) .itin__text { padding-left: 18px; }
+  .itin__item:nth-child(even) .itin__icon { margin-left: 18px; }
+  .itin__item:nth-child(even) .itin__text { padding-right: 18px; }
+}
+
+/* ---------- Travel plans (under the Stay map): how are you travelling? ---------- */
+
+.travel { max-width: 460px; margin: 3rem auto 0; scroll-margin-top: calc(var(--topbar) + 12px); outline: none; }
+.travel:empty { display: none; }
+.travel__title { color: var(--rose); font-size: clamp(2rem, 7vw, 2.8rem); margin-bottom: 1.4rem; }
+.travel__card { display: grid; gap: 26px; padding: 4px 4px 0; text-align: left; }
+.travel__q { margin: 0; font-family: var(--display); font-size: 1.35rem; color: var(--ink); text-align: center; }
+.travel__q--sm { font-size: 1.05rem; text-align: center; color: var(--olive); font-family: var(--serif); font-style: italic; }
+/* Same look as the itinerary day tabs: plain text, a rose dot under the chosen one */
+.travel__modes {
+  display: flex; justify-content: center; gap: clamp(28px, 11vw, 64px);
+  padding-bottom: 2px; border-bottom: 1px solid var(--line);
+}
+.mode {
+  position: relative; display: grid; justify-items: center; gap: 6px; padding: .4rem .4rem 1rem; cursor: pointer;
+  color: #9a9d88; transition: color .25s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode::after {
+  content: ""; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; margin-left: -3px;
+  border-radius: 50%; background: var(--rose); transform: scale(0); transition: transform .3s var(--ease-bounce);
+}
+.mode input { position: absolute; opacity: 0; pointer-events: none; }
+.mode__icon { display: block; width: 22px; height: 22px; opacity: .9; }
+.mode__icon svg { display: block; }
+.mode__name { font-style: italic; font-size: 1.02rem; color: var(--muted); transition: color .25s; }
+.mode:hover, .mode:hover .mode__name { color: var(--olive); }
+.mode:has(input:checked) { color: var(--rose); }
+.mode:has(input:checked) .mode__name { color: var(--rose-deep); }
+.mode:has(input:checked)::after { transform: scale(1); }
+.mode:has(input:checked) .mode__icon { animation: itin-pop .5s var(--ease-bounce); }
+.mode:has(input:focus-visible) { outline: 2px solid var(--rose-deep); outline-offset: 3px; border-radius: 6px; }
+.travel__flight { display: grid; gap: 16px; }
+.travel__flight:not([hidden]) { animation: rise .4s var(--ease-out) both; }
+.travel__when { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.travel__when .field span { text-align: center; }
+.field select, .field input[type="time"] {
+  width: 100%; min-height: 44px; padding: .4rem .2rem;
+  border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent;
+  font: inherit; font-size: 16px; color: var(--ink); text-align: center; text-align-last: center;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .2s;
+}
+.field input[type="time"]::-webkit-calendar-picker-indicator { opacity: .35; }
+.field select:focus, .field input[type="time"]:focus { outline: none; border-bottom-color: var(--rose); }
+.travel__form .btn { justify-self: center; width: auto; min-width: 160px; margin-top: 2px; }
+.travel__card--done { text-align: center; justify-items: center; gap: 8px; }
+.travel__thanks { margin: 0; color: var(--olive); font-style: italic; }
+.travel__answer { margin: 0; font-family: var(--display); font-size: 1.25rem; color: var(--rose-deep); }
 
 /* ---------- Wardrobe dialog ---------- */
 

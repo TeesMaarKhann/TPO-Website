@@ -47,9 +47,17 @@
     <header class="topbar">
       <a class="topbar__names" href="#events" data-nav="events"><img src="assets/names.png" alt="Ishita &amp; Sarvesh" width="904" height="110"></a>
       <a class="brand__mono" href="#events" data-nav="events" aria-label="Events"><img src="assets/logo.png" alt="" width="270" height="270"></a>
-      <nav class="pages" aria-label="Pages">
-        <a href="#stay" data-nav="stay">Stay</a>
-        <a href="#tinker" data-nav="tinker">Tinker</a>
+      <nav class="menu" aria-label="Pages">
+        <button id="menu-btn" class="menu__btn" type="button" aria-expanded="false" aria-controls="menu-list">
+          Menu <span class="menu__chev" aria-hidden="true"></span>
+        </button>
+        <ul id="menu-list" class="menu__list" hidden>
+          <li><a href="#events" data-nav="events">Events</a></li>
+          <li><a href="#itinerary" data-nav="itinerary">Itinerary</a></li>
+          <li><a href="#stay" data-nav="stay">Stay</a></li>
+          <li class="menu__sub"><a href="#travel" data-nav="travel">Travel plans</a></li>
+          <li><a href="#tinker" data-nav="tinker">Tinker</a></li>
+        </ul>
       </nav>
     </header>
 
@@ -57,6 +65,15 @@
       <section id="view-events" class="view view--events" aria-label="Events">
         <div id="scroller" class="scroller"></div>
         <nav aria-label="Events"><ol id="dots" class="dots"></ol></nav>
+      </section>
+
+      <section id="view-itinerary" class="view view--page" aria-labelledby="itinerary-title" hidden>
+        <div class="page page--itinerary">
+          <p class="eyebrow">Wedding itinerary</p>
+          <h2 id="itinerary-title" class="display page__title">Your three days</h2>
+          <p id="itinerary-line" class="page__lede"></p>
+          <div id="itinerary" class="itin"></div>
+        </div>
       </section>
 
       <section id="view-stay" class="view view--page" aria-labelledby="stay-title" hidden>
@@ -68,6 +85,7 @@
             <div id="map-panel" class="map-card" aria-live="polite"></div>
           </div>
           <p class="mapbox__hint">Tap a place on the map</p>
+          <div id="travel" class="travel" tabindex="-1"></div>
         </div>
       </section>
 
