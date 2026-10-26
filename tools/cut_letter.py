@@ -18,9 +18,9 @@ H, W = im.shape[:2]
 y0, y1, x0, x1 = 1060, 1830, 90, 1160
 mask = np.zeros((H, W), np.uint8)
 rh, rs = h[y0:y1, x0:x1], s[y0:y1, x0:x1]
-mask[y0:y1, x0:x1] = (rs > 48) | (((rh >= 135) | (rh <= 4)) & (rs > 33))
-mask = cv2.dilate(mask, np.ones((7, 7), np.uint8), iterations=3)
-clean = cv2.inpaint(im, mask, 9, cv2.INPAINT_TELEA).astype(np.float32)
+mask[y0:y1, x0:x1] = (rs > 40) | (((rh >= 135) | (rh <= 4)) & (rs > 28))
+mask = cv2.dilate(mask, np.ones((5, 5), np.uint8), iterations=2)
+clean = cv2.inpaint(im, mask, 5, cv2.INPAINT_TELEA).astype(np.float32)
 
 # Make the paper see-through. Faint colours keep their hue but fade out.
 paper = np.median(clean[300:1000, 60:120].reshape(-1, 3), axis=0)
@@ -50,12 +50,13 @@ rgba = np.dstack([colour, alpha * 255]).clip(0, 255).astype(np.uint8)
 
 def save(box, path):
     out = Image.fromarray(rgba, 'RGBA').crop(box)
-    out = out.crop(out.getbbox())
     out.save(path, quality=86, method=6)
     print(path, out.size)
 
+# Same width, cut at the same line, so on phones the stem carries on
+# straight down from under the dog.
 save((56, 56, W - 56, 972), 'assets/letter-art.webp')
-save((56, 995, W - 56, H - 56), 'assets/letter-stem.webp')
+save((56, 972, W - 56, H - 56), 'assets/letter-stem.webp')
 
 # The divider: the strongly coloured green pixels around it
 y0, y1, x0, x1 = 1205, 1262, 430, 830

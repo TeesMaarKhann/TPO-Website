@@ -412,24 +412,20 @@ a.art-link { text-decoration: none; }
 }
 .letter__art {
   position: relative; display: block; flex: none;
-  width: 100%; max-width: 560px; aspect-ratio: 1080 / 916;
-  max-height: clamp(180px, 100cqh - 340px, 54cqh);
+  width: min(100%, 560px, clamp(180px, 100cqh - 340px, 54cqh) * 1138 / 916);
+  aspect-ratio: 1138 / 916;
   padding: 0; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.letter__art img {
-  display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
-  mask-image: linear-gradient(to bottom, #000 86%, transparent);
+.letter__art img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+/* Phones: the stem carries on from under the dog, down behind the words */
+.letter__art::after {
+  content: ""; position: absolute; left: 0; top: 100%; width: 100%; aspect-ratio: 1138 / 972;
+  background: url(../assets/letter-stem.webp) center top / 100% auto no-repeat; pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent);
+  mask-image: linear-gradient(#000 70%, transparent);
 }
 .letter__art:focus-visible { outline-offset: 6px; border-radius: 18px; }
-.letter__hint {
-  position: absolute; right: 4%; bottom: 6%;
-  font-family: var(--serif); font-style: italic; font-size: .85rem; color: var(--rose-deep);
-  background: rgba(247, 243, 234, .85); padding: .1rem .6rem; border-radius: 999px;
-  animation: hint 2.4s 1.6s ease-in-out infinite; transition: opacity .4s;
-}
-.letter__art.is-tapped .letter__hint { opacity: 0; }
 .letter__art.is-popping img { animation: letter-pop .75s var(--ease-bounce); }
 .letter__burst {
   position: absolute; width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
@@ -442,7 +438,7 @@ a.art-link { text-decoration: none; }
   color: #b8708f; font-size: clamp(.92rem, 4.1cqw, 1.1rem); line-height: 1.42;
 }
 .letter__text::before {
-  content: ""; position: absolute; z-index: -1; left: -10%; right: -10%; top: -6%; bottom: -14%;
+  content: none; position: absolute; z-index: -1; left: -10%; right: -10%; top: -6%; bottom: -14%;
   background: url(../assets/letter-stem.webp) center top / contain no-repeat; opacity: .8;
   -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 75%, transparent);
   mask-image: linear-gradient(transparent, #000 18%, #000 75%, transparent);
@@ -460,9 +456,15 @@ a.art-link { text-decoration: none; }
 
 @media (min-width: 900px) and (orientation: landscape) {
   .letter { flex-direction: row; gap: 5vw; padding: 3cqh 8vw 64px 6vw; }
-  .letter__art { flex: 0 1 auto; width: auto; height: min(84cqh, 46vw * 916 / 1080); max-height: none; max-width: 52vw; }
+  .letter__art { flex: 0 1 auto; width: min(52vw, 84cqh * 1138 / 916, 46vw); }
+  .letter__art img {
+    -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
+    mask-image: linear-gradient(to bottom, #000 86%, transparent);
+  }
+  /* Computers: the stem sits behind the words instead */
+  .letter__art::after { content: none; }
+  .letter__text::before { content: ""; }
   .letter__text { flex: 0 1 34rem; max-width: 34rem; font-size: clamp(1.15rem, 1.75vw, 1.6rem); }
-  .letter__hint { font-size: 1rem; }
 }
 @keyframes letter-in { 0% { transform: scale(.82); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
 @keyframes letter-pop {
@@ -474,7 +476,6 @@ a.art-link { text-decoration: none; }
   12%, 65% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(1); }
 }
-@keyframes hint { 50% { transform: translateY(-4px); } }
 
 /* Next-event cue */
 .scroll-cue {

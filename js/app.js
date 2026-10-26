@@ -528,8 +528,7 @@
     sec.insertAdjacentHTML('beforeend',
       '<div class="letter">' +
         '<button class="letter__art" type="button" aria-label="Ishita and Sarvesh dancing, with their dog joining in. Tap to make them twirl.">' +
-          '<img src="assets/letter-art.webp" alt="" width="1080" height="916">' +
-          '<span class="letter__hint" aria-hidden="true">tap us</span>' +
+          '<img src="assets/letter-art.webp" alt="" width="1138" height="916">' +
         '</button>' +
         '<div class="letter__text">' +
           '<p class="letter__dear">Dear ' + esc(guest.name) + ',</p>' +
@@ -540,7 +539,6 @@
       '</div>' + nextCue(list[0]));
     var art = sec.querySelector('.letter__art');
     art.addEventListener('click', function (e) {
-      art.classList.add('is-tapped');
       art.classList.remove('is-popping');
       void art.offsetWidth; // restart the animation on every tap
       art.classList.add('is-popping');
