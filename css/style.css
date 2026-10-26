@@ -466,6 +466,14 @@ a.art-link { text-decoration: none; }
   .letter__text::before { content: ""; }
   .letter__text { flex: 0 1 34rem; max-width: 34rem; font-size: clamp(1.15rem, 1.75vw, 1.6rem); }
 }
+/* Event illustrations pop when tapped. Uses scale/rotate rather than
+   transform so it doesn't fight the layouts that position them with transform. */
+.m-img, .d-view > .d-p { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.panel.is-active .m-img.is-popping, .panel.is-active .d-p.is-popping { animation: art-pop .75s var(--ease-bounce); }
+@keyframes art-pop {
+  0% { scale: 1; } 30% { scale: 1.06; rotate: -2deg; }
+  55% { scale: .98; rotate: 1.5deg; } 78% { scale: 1.02; rotate: -.5deg; } 100% { scale: 1; rotate: 0deg; }
+}
 @keyframes letter-in { 0% { transform: scale(.82); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
 @keyframes letter-pop {
   0% { transform: scale(1); } 30% { transform: scale(1.1) rotate(-3deg); }
@@ -498,7 +506,7 @@ a.art-link { text-decoration: none; }
 .outro__title { color: var(--rose); font-size: clamp(3.5rem, 16vw, 7rem); }
 .outro__text { color: var(--olive); font-style: italic; font-size: 1rem; margin: .4rem 0 0; }
 .outro__text strong { color: var(--ink); font-weight: 500; }
-.event__actions--center { display: flex; justify-content: center; flex-wrap: wrap; gap: 28px; margin-top: 1.4rem; }
+.event__actions--center { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 1.4rem; }
 .countdown { margin: 1.1rem 0 0; color: var(--olive); font-style: italic; font-size: 1rem; }
 .countdown b { font-family: var(--display); font-style: normal; font-weight: 400; font-size: 2.2rem; color: var(--rose); font-variant-numeric: tabular-nums; vertical-align: -.12em; margin-right: .15em; }
 .countdown:not([hidden]) { animation: rise .8s .3s var(--ease-out) both; }

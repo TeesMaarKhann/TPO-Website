@@ -98,8 +98,8 @@ window.Insider = (function () {
       el.innerHTML =
         '<p class="eyebrow">Members only</p>' +
         '<h3 class="display insider__title">Join the Insider</h3>' +
-        '<p class="insider__math">1 + 1 = 3</p>' +
-        '<p class="insider__line">This is where you get insider tea for free.</p>' +
+        '<p class="insider__math">TPO Insider</p>' +
+        '<p class="insider__line">Tap to get insider tea for free.</p>' +
         '<a class="insider__link" href="' + LINK + '" target="_blank" rel="noopener">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" class="dot"/></svg>' +
           '<span>@tpo_insider</span><span class="insider__arrow" aria-hidden="true">→</span>' +

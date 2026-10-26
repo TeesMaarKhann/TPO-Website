@@ -517,6 +517,17 @@
       '</div>' +
       '<div class="d-view d-view--' + opts.key + '">' + deskLayout(opts.key, opts.actions, opts.ev) + '</div>';
     sec.appendChild(wrap);
+    // Tapping an illustration makes it pop (the words beside it stay put).
+    wrap.addEventListener('click', function (e) {
+      var art = e.target.closest('.m-img, .d-p');
+      if (!art || art.closest('.d-col')) return;
+      art.classList.remove('is-popping');
+      void art.offsetWidth; // restart the animation on every tap
+      art.classList.add('is-popping');
+    });
+    wrap.addEventListener('animationend', function (e) {
+      if (e.animationName === 'art-pop') e.target.classList.remove('is-popping');
+    });
     if (opts.next) sec.insertAdjacentHTML('beforeend', opts.next);
     return sec;
   }
@@ -601,9 +612,9 @@
         '<p class="outro__text">See you in Mulshi</p>' +
         '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
-          (hasStay() ? '<a class="btn btn--primary" href="#itinerary">Itinerary</a>' +
-            '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
-          '<a class="btn btn--primary" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
+          (hasStay() ? '<a class="btn btn--primary btn--sm" href="#itinerary">Itinerary</a>' +
+            '<a class="btn btn--primary btn--sm" href="#stay">Stay</a>' : '') +
+          '<a class="btn btn--primary btn--sm" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
         '</div>' +
       '</div>';
     sec.appendChild(particles('mix'));
