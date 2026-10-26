@@ -246,12 +246,11 @@
     var gate = $('#gate');
     var app = $('#app');
     track(animate ? 'Logged in' : 'Came back');
-    document.querySelectorAll('.menu [data-nav=stay], .menu [data-nav=travel]').forEach(function (a) {
+    document.querySelectorAll('.menu [data-nav=stay], .menu [data-nav=travel], .menu [data-nav=itinerary]').forEach(function (a) {
       a.parentNode.hidden = !hasStay();
     });
     buildEvents();
-    buildItinerary();
-    if (hasStay()) { buildStay(); buildTravel(); }
+    if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
     window.Tinker.mount($('#game'));
     app.hidden = false;
     if (animate && !reduceMotion) {
@@ -271,7 +270,8 @@
     var page = (location.hash || '#events').slice(1);
     if (page === 'signout') return signOut();  // handy for testing: open #signout
     if (VIEWS.indexOf(page) < 0 && page !== 'travel' && !$('#ev-' + page)) page = 'events';
-    if ((page === 'stay' || page === 'travel') && !hasStay()) page = 'events';
+    // Guests invited to the wedding alone don't get Itinerary, Stay or Travel.
+    if ((page === 'stay' || page === 'travel' || page === 'itinerary') && !hasStay()) page = 'events';
     var isEvent = !!$('#ev-' + page);
     // Travel plans live at the bottom of the Stay page.
     var view = isEvent ? 'events' : page === 'travel' ? 'stay' : page;
@@ -562,8 +562,8 @@
         '<p class="outro__text">See you in Mulshi</p>' +
         '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
-          '<a class="btn btn--primary" href="#itinerary">Itinerary</a>' +
-          (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
+          (hasStay() ? '<a class="btn btn--primary" href="#itinerary">Itinerary</a>' +
+            '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
       '</div>';
@@ -684,6 +684,7 @@
     $('#itinerary-line').hidden = !mine;
     var box = $('#itinerary');
     if (!days.length) { box.innerHTML = ''; return; }
+    $('#itinerary-title').textContent = ['Your day', 'Your two days', 'Your three days'][days.length - 1] || 'Your itinerary';
 
     // Open on today during the wedding, otherwise the first day.
     var today = new Date().getDate() + ' ' + new Date().toLocaleString('en-GB', { month: 'long' });
@@ -745,10 +746,13 @@
   // goes to the Visits tab of the sheet as a "Travel plan" row, and is kept on
   // their device so they can see or change it.
   var TRAVEL_KEY = 'is-wedding-travel-v1';
+  var ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">';
+  var CAR = '<path d="M5 16.5V13l1.6-4.2A2 2 0 0 1 8.5 7.5h7a2 2 0 0 1 1.9 1.3L19 13v3.5"/><path d="M4 16.5h16"/><path d="M5 13h14"/>' +
+    '<circle cx="8" cy="16.5" r="1.6"/><circle cx="16" cy="16.5" r="1.6"/>';
   var MODES = [
-    { id: 'Flight', icon: '✈️' },
-    { id: 'Car', icon: '🚗' },
-    { id: 'Cab', icon: '🚕' }
+    { id: 'Flight', icon: ICON + '<path d="M10.5 13.5 4 11.2l1.2-1.4 7.3.9 3.9-4.1c.8-.8 2-.9 2.5-.4s.4 1.7-.4 2.5l-4.1 3.9.9 7.3-1.4 1.2-2.3-6.5-3 2.9v2.2l-1.1 1-1.2-2.8-2.8-1.2 1-1.1h2.2z"/></svg>' },
+    { id: 'Car', icon: ICON + CAR + '</svg>' },
+    { id: 'Cab', icon: ICON + CAR + '<path d="M10 7.5V5.5h4v2"/></svg>' }
   ];
   var LAND_DAYS = ['8 December', '9 December', '10 December'];
 

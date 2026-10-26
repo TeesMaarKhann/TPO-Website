@@ -14,7 +14,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
    to, with tabs on top and a wardrobe planner popup per event.
 3. **Itinerary** – the tent-card schedule, one tab per day, cut down to that
    guest: only their events, and check-in, hi-tea, breakfast and check-out at
-   their own resort.
+   their own resort. Wedding + Cocktail guests see just those two; guests
+   invited to the wedding alone don't see this page.
 4. **Stay** – which resort the guest is staying at, plus the illustrated map,
    then **Travel plans**: the guest picks flight (with landing day and time),
    car or cab. Answers land in the **Visits** tab as a "Travel plan" row (see
