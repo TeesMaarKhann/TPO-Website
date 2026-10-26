@@ -120,8 +120,13 @@ window.EVENTS = [
     cardAlt: 'Illustrated invite: Toast & Tonic. 10th December, 5:30pm onwards, Palmwoods Retreat, Mulshi.',
     accent: '#c47f6e',
     particles: 'bubble',
-    // No wardrobe page yet. Add one like the others when it's ready.
-    wardrobe: null
+    wardrobe: {
+      image: 'assets/wardrobe/cocktail.jpg',
+      name: 'Toast & Tonic',
+      shade: 'All white',
+      line: 'Ladies keep it white. Gentlemen have a little wiggle room for beige and brown.',
+      swatches: ['#eeeeec', '#ebdec6', '#edc49a', '#d6b094', '#c2a287', '#c38152']
+    }
   }
 ];
 
