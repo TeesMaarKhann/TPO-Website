@@ -161,8 +161,7 @@
           return showErr('Please type your first name and surname.');
         }
         if (found && found.hint) {
-          return showErr('You’re on the guest list! Your invite went to ' + found.hint +
-            ', so please use their phone number to log in.');
+          return showErr('Please use ' + found.hint + '’s phone number.');
         }
         if (found) {
           return showErr('You’re on the guest list, but we don’t have a phone number for you yet. Give Ishita or Sarvesh a call and we’ll add it.');
