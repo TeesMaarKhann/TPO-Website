@@ -784,14 +784,21 @@ a.art-link { text-decoration: none; }
 .game__intro p, .game__end p { color: var(--muted); }
 
 /* Join the Insider (Tinker page, insiders only) */
-.insider {
-  margin-top: 28px; text-align: center; background: var(--card);
-  border: 1px solid var(--line); border-top: 4px solid var(--gold);
-  border-radius: 16px; padding: 24px 18px; box-shadow: var(--shadow);
+.insider { text-align: center; margin-bottom: 40px; }
+.insider__title { margin: .2rem 0 .3rem; font-size: 1.9rem; color: var(--ink); }
+.insider__math { font-family: var(--display); font-size: 2.4rem; color: var(--rose); margin: .1rem 0; }
+.insider__line { color: var(--muted); margin: 0 0 .9rem; }
+.insider__link {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--rose-deep); font-family: var(--serif); font-style: italic;
+  font-size: 1.15rem; text-decoration: none;
 }
-.insider__title { margin: .2rem 0 .4rem; font-size: 1.9rem; color: var(--ink); }
-.insider__math { font-family: var(--display); font-size: 2.4rem; color: var(--rose); margin: .2rem 0; }
-.insider__line { color: var(--muted); margin: 0 0 1.2rem; }
+.insider__link svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.insider__link svg .dot { fill: currentColor; stroke: none; }
+.insider__link span:not(.insider__arrow) { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .3s var(--ease-out); }
+.insider__link:hover span:not(.insider__arrow) { background-size: 100% 1px; }
+.insider__arrow { transition: transform .3s var(--ease-out); }
+.insider__link:hover .insider__arrow { transform: translateX(4px); }
 .game__best { color: var(--rose-deep) !important; }
 .game__final { color: var(--rose); font-size: 5rem; }
 .game__hud { display: flex; align-items: center; gap: 12px; font-size: .95rem; color: var(--muted); }
