@@ -33,11 +33,17 @@ deliberately slow method (PBKDF2-SHA256, 600,000 rounds). To log in a guest
 types both, and the browser rebuilds the same key and looks it up.
 
 - Guests can type their full name (any word order) or just their first name.
-- Guests with no number of their own (e.g. "Kushal Shah Wife") use their
-  household's number. The household is the nearest row above them that has a
-  phone number or a filled POC column.
-- The script lists anyone who can't log in because neither they nor their
-  household has a number. Add a number in the sheet and rebuild.
+  The sheet's word order doesn't matter ("Dekhne Dilip" works as "Dilip").
+- Typing only a surname asks for first name and surname. Any first name with
+  the right surname then works, so "Kushal Shah Wife" can log in as her own name.
+- Where the POC column spells someone better ("Dilip Dhekne" for "Dekhne
+  Dilip"), that spelling works too, and so does the POC's number.
+- Guests with no number of their own use their household's: the nearest row
+  above with a phone that shares their surname (or one just below).
+- A guest with no number who types their name with the wrong number is told
+  whose number to use, or to call Ishita or Sarvesh if there's none.
+- The script lists anyone who can't log in because no number is known, and
+  anyone whose household it had to guess. Fix the sheet and rebuild.
 - Each device remembers the name and number a guest typed, so they only log
   in once. After a rebuild the site quietly checks the saved details against
   the new list; guests are only asked again if they're no longer on it.

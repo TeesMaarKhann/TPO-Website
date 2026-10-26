@@ -23,52 +23,95 @@
 
   /* ---------- Guest lookup (must match tools/build_guests.py) ---------- */
 
-  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'family', 'mr', 'mrs', 'ms', 'dr'];
+  // Words that are never someone's own name: relations, titles, nicknames.
+  var NOT_NAMES = ['wife', 'husband', 'mother', 'father', 'son', 'daughter', 'dad',
+    'mom', 'family', 'mr', 'mrs', 'ms', 'dr', 'kaka', 'kaku', 'ajji', 'aji', 'aaji',
+    'mama', 'mami', 'mavshi', 'maushi', 'atya', 'bhai', 'toddler'];
 
   function nameWords(name) {
     name = name.toLowerCase().replace(/\(.*?\)/g, ' ').trim().replace(/^\w+_\s*/, '');
     return name.match(/[a-z]+/g) || [];
   }
-  // Full name (word order ignored), then the first name on its own.
-  function nameKeys(name) {
-    var w = nameWords(name);
-    var keys = [];
-    if (w.length) {
-      keys.push(w.slice().sort().join(' '));
-      if (w.length > 1 && w[0].length > 1 && NOT_NAMES.indexOf(w[0]) < 0) keys.push(w[0]);
-    }
-    return keys;
+  function realWords(w) {
+    return w.filter(function (x, i) {
+      return x.length > 1 && NOT_NAMES.indexOf(x) < 0 && w.indexOf(x) === i;
+    });
+  }
+  function fullKey(name) {
+    return nameWords(name).sort().join(' ');
   }
   function normPhone(phone) {
-    var d = String(phone || '').replace(/\D/g, '');
+    var d = String(phone || '').split(/[\/,;]/)[0].replace(/\D/g, '');
     return d.length >= 8 ? d.slice(-10) : '';
   }
 
   // Slow on purpose (PBKDF2, GUESTS.iter rounds) so the list can't be guessed.
-  function deriveKey(text) {
+  function derive(text, bytes) {
     var enc = new TextEncoder();
     return crypto.subtle.importKey('raw', enc.encode(text), 'PBKDF2', false, ['deriveBits'])
       .then(function (k) {
         return crypto.subtle.deriveBits(
-          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, 96);
+          { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(GUESTS.salt), iterations: GUESTS.iter }, k, bytes * 8);
       })
-      .then(function (bits) {
-        return Array.prototype.map.call(new Uint8Array(bits), function (b) {
-          return ('0' + b.toString(16)).slice(-2);
-        }).join('');
-      });
+      .then(function (bits) { return new Uint8Array(bits); });
+  }
+  function hex(bytes) {
+    return Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
   }
 
-  // Resolves to [events, resort] or null. Needs both name and phone.
+  // For guests with no number of their own: whose number to use ('' = none yet).
+  // Stored encrypted with their name, so only someone who types it can read it.
+  function findHint(full) {
+    if (!GUESTS.h) return Promise.resolve(null);
+    return derive('?' + full, 44).then(function (b) {
+      var c = GUESTS.h[hex(b.subarray(0, 12))];
+      if (!c) return null;
+      var out = new Uint8Array(32);
+      for (var i = 0; i < 32; i++) out[i] = parseInt(c.substr(i * 2, 2), 16) ^ b[12 + i];
+      return new TextDecoder().decode(out).replace(/\0+$/, '');
+    });
+  }
+
+  // Resolves to one of:
+  //   { match: [events, resort], first: 'dilip' }  found them
+  //   { ask: true }    typed only a surname: ask for first name and surname
+  //   { hint: 'Kirit Shah' }   on the list, but needs that person's number
+  //   { hint: '' }     on the list, but no number for them in the sheet
+  //   null             not found
+  // A guest's first name or full name works; a surname (key "~word") only
+  // works when typed with another name.
   function findGuest(name, phone) {
     var p = normPhone(phone);
-    var keys = nameKeys(name);
-    if (!p || !keys.length || !window.crypto || !crypto.subtle) return Promise.resolve(null);
-    return keys.reduce(function (found, n) {
-      return found.then(function (hit) {
-        return hit || deriveKey(n + '|' + p).then(function (k) { return GUESTS.g[k] || null; });
-      });
-    }, Promise.resolve(null));
+    var full = fullKey(name);
+    var w = realWords(nameWords(name));
+    if (!p || !full || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+    var tries = [];
+    if (w.length <= 1) {
+      tries.push({ key: w[0] || full, first: w[0] });
+    } else {
+      tries.push({ key: full });
+      w.forEach(function (x) { tries.push({ key: x, first: x }); });
+      w.forEach(function (x) { tries.push({ key: '~' + x }); });
+    }
+    var single = w.length === 1 ? derive('~' + w[0] + '|' + p, 12) : Promise.resolve(null);
+    // All at once: the browser runs them in parallel.
+    return Promise.all([
+      Promise.all(tries.map(function (t) { return derive(t.key + '|' + p, 12); })),
+      single
+    ]).then(function (res) {
+      var hits = res[0].map(function (b) { return GUESTS.g[hex(b)]; });
+      for (var i = 0; i < tries.length; i++) {
+        if (!hits[i]) continue;
+        // Greet them by whichever typed word is a first name on the list.
+        var first = w[0];
+        for (var j = 0; j < tries.length; j++) {
+          if (hits[j] && tries[j].first) { first = tries[j].first; break; }
+        }
+        return { match: hits[i], first: first };
+      }
+      if (res[1] && GUESTS.g[hex(res[1])]) return { ask: true };
+      return findHint(full).then(function (h) { return h == null ? null : { hint: h }; });
+    });
   }
 
   function save(g, name, phone) {
@@ -106,14 +149,32 @@
       btn.disabled = true;
       btn.textContent = 'Checking the guest list…';
       err.hidden = true;
-      findGuest(name, phone).then(function (match) {
+      findGuest(name, phone).then(function (found) {
         btn.disabled = false;
         btn.innerHTML = label;
-        if (!match) {
-          return showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+        if (found && found.match) {
+          login(name, phone, found);
+          return enter(true);
         }
-        login(name, phone, match);
-        enter(true);
+        if (found && found.ask) {
+          $('#g-name').focus();
+          return showErr('Please type your first name and surname.');
+        }
+        if (found && found.hint) {
+          return showErr('You’re on the guest list! Your invite went to ' + found.hint +
+            ', so please use their phone number to log in.');
+        }
+        if (found) {
+          return showErr('You’re on the guest list, but we don’t have a phone number for you yet. Give Ishita or Sarvesh a call and we’ll add it.');
+        }
+        if (realWords(nameWords(name)).length < 2) {
+          return showErr('We couldn’t find you. Try your first name and surname, with the number your invite was sent to.');
+        }
+        showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
+      }).catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = label;
+        showErr('Something went wrong. Please try again.');
       });
     });
 
@@ -126,8 +187,9 @@
     }
   }
 
-  function login(name, phone, match) {
-    guest = { name: firstName(name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+  function login(name, phone, found) {
+    var match = found.match;
+    guest = { name: firstName(found.first || name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
     save(guest, name, phone);
   }
 
@@ -512,9 +574,9 @@
     // The guest list was rebuilt since this device last logged in: check the
     // saved name and number against the new list without asking again.
     $('#gate').hidden = true;
-    findGuest(typed.name, typed.phone).then(function (match) {
-      if (match) {
-        login(typed.name, typed.phone, match);
+    findGuest(typed.name, typed.phone).catch(function () { return null; }).then(function (found) {
+      if (found && found.match) {
+        login(typed.name, typed.phone, found);
         enter(false);
       } else {
         $('#g-name').value = typed.name;
