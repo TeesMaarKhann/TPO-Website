@@ -73,3 +73,23 @@ The invites use Canva fonts (e.g. Frunchy Serif). The site uses Fraunces and
 Playfair Display from Google Fonts as close stand-ins. If you have a licence
 for the original, add it to `css/style.css` as a `url(...)` in the
 `@font-face` at the top and it'll be used automatically.
+
+## Visit log
+
+The site can add a row to the **Visits** tab of the "TPO | Website" Google
+Sheet each time a guest logs in, comes back, or opens a page, event or
+wardrobe. Each row has the time, the name they typed, what they did, the
+events they're invited to, phone or computer, and a visit ID that groups one
+sitting together. Phone numbers are never sent. Failed logins are logged too,
+so you can spot guests who are stuck.
+
+Setup (once):
+
+1. In the sheet: Extensions → Apps Script. Replace everything with
+   `tools/visit-log.gs` and save.
+2. Deploy → New deployment → Web app. Execute as **Me**, access **Anyone**.
+   Approve the permission prompt.
+3. Copy the Web app URL (ends in `/exec`) into `LOG_URL` at the top of
+   `js/app.js`, then commit.
+
+Leave `LOG_URL` empty to turn logging off.

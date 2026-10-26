@@ -5,6 +5,9 @@
   // What the guest typed, kept on their own device so they never have to type
   // it again, even after the guest list is rebuilt.
   var LOGIN_KEY = 'is-wedding-login-v1';
+  // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
+  // logging off.
+  var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var guest = null;
 
@@ -131,6 +134,37 @@
     location.reload();
   }
 
+  /* ---------- Visit log ---------- */
+
+  // Sends one row to the Visits tab of the guest sheet. Never sends the phone
+  // number. Each thing is logged once per visit so the sheet stays readable.
+  var visitId = Math.random().toString(36).slice(2, 8);
+  var logged = {};
+  function track(action, page, name) {
+    if (!LOG_URL) return;
+    var id = action + '|' + (page || '');
+    if (logged[id]) return;
+    logged[id] = true;
+    var typed = load(LOGIN_KEY);
+    var row = {
+      name: name || (typed && typed.name) || (guest && guest.name) || '',
+      action: action,
+      page: page || '',
+      events: guest ? guest.events : '',
+      device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'Phone' : 'Computer',
+      visit: visitId
+    };
+    try {
+      fetch(LOG_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        keepalive: true,
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(row)
+      }).catch(function () { /* ignore */ });
+    } catch (e) { /* ignore */ }
+  }
+
   /* ---------- Home / gate ---------- */
 
   function initGate() {
@@ -156,6 +190,7 @@
           login(name, phone, found);
           return enter(true);
         }
+        track('Couldn’t log in', '', name);
         if (found && found.ask) {
           $('#g-name').focus();
           return showErr('Please type your first name and surname.');
@@ -207,6 +242,7 @@
   function enter(animate) {
     var gate = $('#gate');
     var app = $('#app');
+    track(animate ? 'Logged in' : 'Came back');
     document.querySelectorAll('[data-nav=stay]').forEach(function (a) { a.hidden = !hasStay(); });
     buildEvents();
     if (hasStay()) buildStay();
@@ -230,6 +266,7 @@
     if (page === 'stay' && !hasStay()) page = 'events';
     var isEvent = !!$('#ev-' + page);
     var view = isEvent ? 'events' : page;
+    track('Opened', view.charAt(0).toUpperCase() + view.slice(1));
 
     ['events', 'stay', 'tinker'].forEach(function (v) {
       $('#view-' + v).hidden = v !== view;
@@ -330,6 +367,7 @@
         if (on) dot.firstChild.setAttribute('aria-current', 'true'); else dot.firstChild.removeAttribute('aria-current');
       }
     });
+    track('Saw', 'Events › ' + sec.dataset.tab);
     document.body.style.setProperty('--accent', sec.dataset.accent || '#c96f6a');
     if (sec.dataset.key === 'end') countdown(sec);
   }
@@ -513,6 +551,7 @@
   function openWardrobe(id) {
     var ev = EVENTS.filter(function (e) { return e.id === id; })[0];
     if (!ev) return;
+    track('Opened wardrobe', ev.tab);
     var dlg = $('#wardrobe');
     var body = $('#wardrobe-body');
     var w = ev.wardrobe;
