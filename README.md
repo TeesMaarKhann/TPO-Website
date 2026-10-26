@@ -41,9 +41,10 @@ types both, and the browser rebuilds the same key and looks it up.
 - Guests with no number of their own use their household's: the nearest row
   above with a phone that shares their surname (or one just below).
 - A guest with no number who types their name with the wrong number is told
-  whose number to use, or to call Ishita or Sarvesh if there's none.
+  whose number to use. If the sheet has no number for them, or their household
+  isn't clear (no shared surname), they're asked to contact Ishita or Sarvesh.
 - The script lists anyone who can't log in because no number is known, and
-  anyone whose household it had to guess. Fix the sheet and rebuild.
+  anyone whose household isn't clear. Fix the sheet and rebuild.
 - Each device remembers the name and number a guest typed, so they only log
   in once. After a rebuild the site quietly checks the saved details against
   the new list; guests are only asked again if they're no longer on it.

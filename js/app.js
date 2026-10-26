@@ -165,7 +165,8 @@
             'Please use ' + found.hint + '’s number to log in.');
         }
         if (found) {
-          return showErr('You’re on the guest list, but we don’t have a phone number for you yet. Give Ishita or Sarvesh a call and we’ll add it.');
+          return showErr('Welcome ' + firstName(realWords(nameWords(name))[0] || name) + '!\n' +
+            'Please contact Ishita or Sarvesh to log in.');
         }
         if (realWords(nameWords(name)).length < 2) {
           return showErr('We couldn’t find you. Try your first name and surname, with the number your invite was sent to.');

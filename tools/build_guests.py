@@ -36,8 +36,8 @@ Which numbers work
 - The guest's own number, and the number of the POC named on their row.
 - Guests with no number use their household's: the nearest row above with a
   phone, if it shares their surname (or a row just below with their surname).
-  If no row shares their surname, the nearest household above is used but
-  flagged in the report so you can check it.
+  If no row shares their surname, no number is guessed: they're asked to
+  contact Ishita or Sarvesh, and listed in the report so you can fix the sheet.
 - A guest with no number who types their full name and a wrong number is told
   whose number to use. That hint is encrypted with their name, so the file
   still reveals nothing to someone who doesn't already know the name.
@@ -230,8 +230,8 @@ def link_households(rows):
         elif below:
             src = below
         elif above and above["phones"]:
-            # Probably their household, but not sure: allow it, give no hint.
-            r["use"] += [p for p in above["use"] if p not in r["use"]]
+            # Maybe their household, maybe not: don't guess. They're asked
+            # to contact Ishita or Sarvesh.
             guessed.append((r["name"], above["name"]))
             continue
         else:
@@ -340,6 +340,8 @@ def main(csv_path):
         encoding="utf-8")
     print(f"{len(rows)} guests -> {OUT.relative_to(ROOT)}")
 
+    unclear = {p for p, _ in guessed}
+    no_number = [p for p in no_number if p not in unclear]
     if no_number:
         print(f"\n{len(no_number)} guests can't log in yet: neither they nor "
               "their household have a phone number in the sheet. Add one and rebuild.")
@@ -347,9 +349,10 @@ def main(csv_path):
             print("  -", p)
     if guessed:
         print(f"\n{len(guessed)} guests have no number and don't share a surname "
-              "with the row above. They can log in with that row's number; check it's right:")
+              "with the row above, so they can't log in yet. Add their number (or fix the "
+              "household) in the sheet and rebuild:")
         for p, src in guessed:
-            print(f"  - {p}  ->  {src}'s number")
+            print(f"  - {p}  (row above: {src})")
 
 
 if __name__ == "__main__":
