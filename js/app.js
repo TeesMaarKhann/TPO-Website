@@ -7,7 +7,7 @@
   var LOGIN_KEY = 'is-wedding-login-v1';
   // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
   // logging off.
-  var LOG_URL = '';
+  var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var guest = null;
 
