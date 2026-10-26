@@ -147,6 +147,7 @@ a { color: inherit; }
 .gate__error {
   margin: 0; padding: .6rem .8rem; border-radius: 8px;
   background: #fbe6e6; color: #8a2f3d; font-size: .92rem; line-height: 1.4;
+  white-space: pre-line;
 }
 .field { display: grid; gap: 4px; }
 .field span { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }

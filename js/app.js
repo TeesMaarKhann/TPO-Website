@@ -161,7 +161,8 @@
           return showErr('Please type your first name and surname.');
         }
         if (found && found.hint) {
-          return showErr('Please use ' + found.hint + '’s phone number.');
+          return showErr('Welcome ' + firstName(realWords(nameWords(name))[0] || name) + '!\n' +
+            'Please use ' + found.hint + '’s number to log in.');
         }
         if (found) {
           return showErr('You’re on the guest list, but we don’t have a phone number for you yet. Give Ishita or Sarvesh a call and we’ll add it.');
