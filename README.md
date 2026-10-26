@@ -106,4 +106,17 @@ Setup (once):
 3. Copy the Web app URL (ends in `/exec`) into `LOG_URL` at the top of
    `js/app.js`, then commit.
 
+The sheet's other tabs are built from Visits with formulas and fill in on
+their own:
+
+- **Guests** – one row per guest: visits, last and first visit, events seen,
+  how often they opened Stay and the game, wardrobes opened, travel plan.
+- **Travel** – each guest's latest travel plan, flights sorted by landing
+  time, with counts of flying / car / cab.
+- **Login problems** – names typed by people who couldn't log in.
+
+Names are matched ignoring capitals, so "sarvesh" and "Sarvesh" are one
+guest. If you change the wording the site logs (for example "Travel plan"),
+update these formulas too.
+
 Leave `LOG_URL` empty to turn logging off.
