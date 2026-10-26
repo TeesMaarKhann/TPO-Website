@@ -92,12 +92,4 @@ Setup (once):
 3. Copy the Web app URL (ends in `/exec`) into `LOG_URL` at the top of
    `js/app.js`, then commit.
 
-Travel details: the Stay page has a short travel form (how many people,
-arrival day, time of day, how they're coming, pickup or not). Wedding-only
-guests get it from a Travel button on the last Events panel. Answers go into
-the same log as a "Travel details" row, so the script needs no change.
-
-The sheet's **Guests**, **Travel** and **Login problems** tabs are built from
-the Visits tab with formulas, so they fill in on their own.
-
 Leave `LOG_URL` empty to turn logging off.

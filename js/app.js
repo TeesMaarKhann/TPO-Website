@@ -5,7 +5,6 @@
   // What the guest typed, kept on their own device so they never have to type
   // it again, even after the guest list is rebuilt.
   var LOGIN_KEY = 'is-wedding-login-v1';
-  var TRAVEL_KEY = 'is-wedding-travel-v1';
   // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
   // logging off.
   var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
@@ -130,7 +129,7 @@
     try { return JSON.parse(localStorage.getItem(key || STORE_KEY) || 'null'); } catch (e) { return null; }
   }
   function signOut() {
-    try { localStorage.removeItem(STORE_KEY); localStorage.removeItem(LOGIN_KEY); localStorage.removeItem(TRAVEL_KEY); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem(STORE_KEY); localStorage.removeItem(LOGIN_KEY); } catch (e) { /* ignore */ }
     location.hash = '';
     location.reload();
   }
@@ -327,7 +326,6 @@
     scroller.addEventListener('click', function (e) {
       var w = e.target.closest('[data-wardrobe]');
       if (w) openWardrobe(w.dataset.wardrobe);
-      if (e.target.closest('[data-travel]')) openTravel();
       var n = e.target.closest('[data-next]');
       if (n) goTo(n.dataset.next, true);
     });
@@ -506,8 +504,7 @@
         '<p class="outro__text">See you in Mulshi</p>' +
         '<p class="countdown" hidden><b>0</b> <span></span></p>' +
         '<div class="event__actions event__actions--center">' +
-          (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' :
-            '<button class="btn btn--primary" type="button" data-travel>Travel</button>') +
+          (hasStay() ? '<a class="btn btn--primary" href="#stay">Stay</a>' : '') +
           '<a class="btn btn--primary" href="#tinker">Play</a>' +
         '</div>' +
       '</div>';
@@ -600,95 +597,6 @@
     $('#stay-title').textContent = mine ? mine.name : 'Getting there';
     $('#stay-line').textContent = mine ? 'Your stay' : 'Find your way to the celebrations';
     WeddingMap.mount($('#map'), $('#map-panel'), { events: myEvents(), resort: guest.resort });
-    travelForm($('#stay-travel'));
-  }
-
-  /* ---------- Travel plans ---------- */
-
-  // A short form: how many, which day, what time, how, and whether they need
-  // a pickup. Answers go to the visit log as one "Travel details" row and are
-  // kept on the device so the form shows what they last sent.
-  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  function arrivalDays() {
-    var evs = myEvents().filter(function (e) { return e.on; });
-    if (!evs.length) return [];
-    function d(s) { var p = s.split('-'); return new Date(+p[0], p[1] - 1, +p[2]); }
-    var day = d(evs[0].on);
-    var last = d(evs[evs.length - 1].on);
-    day.setDate(day.getDate() - 1);
-    var out = [];
-    while (day <= last) {
-      out.push(day.getDate() + ' ' + MONTHS[day.getMonth()]);
-      day.setDate(day.getDate() + 1);
-    }
-    return out;
-  }
-
-  function travelForm(box) {
-    var saved = load(TRAVEL_KEY) || {};
-    function chips(name, opts) {
-      return '<div class="chips" role="radiogroup">' + opts.map(function (o) {
-        return '<label class="chip"><input type="radio" name="' + name + '" value="' + esc(o) + '"' +
-          (saved[name] === o ? ' checked' : '') + '><span>' + esc(o) + '</span></label>';
-      }).join('') + '</div>';
-    }
-    box.innerHTML =
-      '<form class="travel" novalidate>' +
-        '<p class="eyebrow">Your travel</p>' +
-        '<p class="travel__lead">Tell us when you’re coming so we can plan pickups.</p>' +
-        '<div class="travel__q"><span>How many of you?</span>' +
-          '<div class="stepper">' +
-            '<button type="button" class="stepper__btn" data-step="-1" aria-label="Fewer">−</button>' +
-            '<output name="people">' + (saved.people || 1) + '</output>' +
-            '<button type="button" class="stepper__btn" data-step="1" aria-label="More">+</button>' +
-          '</div></div>' +
-        '<div class="travel__q"><span>Arriving on</span>' + chips('day', arrivalDays()) + '</div>' +
-        '<div class="travel__q"><span>Around</span>' + chips('time', ['Morning', 'Afternoon', 'Evening']) + '</div>' +
-        '<div class="travel__q"><span>Coming by</span>' + chips('by', ['Flight', 'Train', 'Car']) + '</div>' +
-        '<div class="travel__q" data-pickup><span>Need a pickup?</span>' + chips('pickup', ['Yes', 'No']) + '</div>' +
-        '<p class="travel__msg" aria-live="polite"></p>' +
-        '<button class="btn btn--primary btn--wide" type="submit">' + (saved.day ? 'Update' : 'Send') + '</button>' +
-      '</form>';
-
-    var form = box.querySelector('form');
-    var out = form.querySelector('output');
-    var msg = form.querySelector('.travel__msg');
-    var pickupQ = form.querySelector('[data-pickup]');
-    function val(name) { var i = form.querySelector('input[name=' + name + ']:checked'); return i ? i.value : ''; }
-    function sync() { pickupQ.hidden = !(val('by') === 'Flight' || val('by') === 'Train'); }
-    sync();
-    if (saved.day) msg.textContent = 'Sent. You can change this anytime.';
-
-    form.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-step]');
-      if (!b) return;
-      out.value = Math.min(20, Math.max(1, (+out.value || 1) + +b.dataset.step));
-    });
-    form.addEventListener('change', function () { sync(); msg.textContent = ''; });
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var t = { people: +out.value || 1, day: val('day'), time: val('time'), by: val('by'), pickup: val('pickup') };
-      if (t.by === 'Car') t.pickup = 'No';
-      if (!t.day || !t.time || !t.by || !t.pickup) {
-        msg.textContent = 'Please answer each question.';
-        return;
-      }
-      track('Travel details', [t.people, t.day, t.time, t.by, t.pickup].join(' | '));
-      try { localStorage.setItem(TRAVEL_KEY, JSON.stringify(t)); } catch (err) { /* ignore */ }
-      msg.textContent = 'Thank you! You can change this anytime.';
-      form.querySelector('[type=submit]').textContent = 'Update';
-    });
-  }
-
-  function openTravel() {
-    var dlg = $('#wardrobe');
-    var body = $('#wardrobe-body');
-    body.innerHTML = '<h3 id="wardrobe-title" class="visually-hidden">Your travel</h3><div class="travel-card"></div>';
-    travelForm(body.querySelector('.travel-card'));
-    dlg.style.setProperty('--ev', 'var(--rose)');
-    if (typeof dlg.showModal === 'function') dlg.showModal();
-    else dlg.setAttribute('open', '');
   }
 
   /* ---------- Boot ---------- */
