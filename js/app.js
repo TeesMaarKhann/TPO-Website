@@ -798,7 +798,7 @@
             '</div>' +
           '</div>' +
           '<p class="gate__error" role="alert" hidden></p>' +
-          '<button class="btn btn--primary btn--wide" type="submit">Save</button>' +
+          '<button class="btn btn--primary" type="submit">Save</button>' +
         '</form>';
 
       var f = box.querySelector('form');

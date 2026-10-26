@@ -637,42 +637,50 @@ a.art-link { text-decoration: none; }
 .travel { max-width: 460px; margin: 3rem auto 0; scroll-margin-top: calc(var(--topbar) + 12px); outline: none; }
 .travel:empty { display: none; }
 .travel__title { color: var(--rose); font-size: clamp(2rem, 7vw, 2.8rem); margin-bottom: 1.4rem; }
-.travel__card {
-  display: grid; gap: 22px; padding: 28px 22px 26px; text-align: left;
-  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-}
+.travel__card { display: grid; gap: 26px; padding: 4px 4px 0; text-align: left; }
 .travel__q { margin: 0; font-family: var(--display); font-size: 1.35rem; color: var(--ink); text-align: center; }
-.travel__q--sm { font-size: 1.05rem; text-align: left; }
-.travel__modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.travel__q--sm { font-size: 1.05rem; text-align: center; color: var(--olive); font-family: var(--serif); font-style: italic; }
+/* Same look as the itinerary day tabs: plain text, a rose dot under the chosen one */
+.travel__modes {
+  display: flex; justify-content: center; gap: clamp(28px, 11vw, 64px);
+  padding-bottom: 2px; border-bottom: 1px solid var(--line);
+}
 .mode {
-  position: relative; display: grid; justify-items: center; gap: 6px; padding: 14px 6px 12px; cursor: pointer;
-  border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .55);
-  color: #8c917a;
-  transition: border-color .2s, color .2s, background .2s, transform .25s var(--ease-bounce);
+  position: relative; display: grid; justify-items: center; gap: 6px; padding: .4rem .4rem 1rem; cursor: pointer;
+  color: #9a9d88; transition: color .25s;
   -webkit-tap-highlight-color: transparent;
 }
-.mode input { position: absolute; opacity: 0; pointer-events: none; }
-.mode__icon { display: block; width: 22px; height: 22px; opacity: .85; }
-.mode__icon svg { display: block; }
-.mode__name { font-style: italic; font-size: .95rem; color: var(--muted); }
-.mode:hover { border-color: var(--sage); }
-.mode:has(input:checked) { border-color: rgba(201, 111, 125, .55); background: #fff; color: var(--rose); }
-.mode:has(input:checked) .mode__name { color: var(--rose-deep); }
-.mode:has(input:checked) .mode__icon { animation: itin-pop .5s var(--ease-bounce); }
-.mode:has(input:focus-visible) { outline: 2px solid var(--rose-deep); outline-offset: 3px; }
-.travel__flight { display: grid; gap: 14px; padding-top: 4px; }
-.travel__flight:not([hidden]) { animation: rise .4s var(--ease-out) both; }
-.travel__when { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.field select, .field input[type="time"] {
-  width: 100%; min-height: 48px; padding: .6rem .9rem;
-  border: 1.5px solid var(--sage); border-radius: 10px; background: #fff;
-  font: inherit; font-size: 16px; color: var(--ink);
+.mode::after {
+  content: ""; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; margin-left: -3px;
+  border-radius: 50%; background: var(--rose); transform: scale(0); transition: transform .3s var(--ease-bounce);
 }
-.field select:focus, .field input[type="time"]:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 111, 125, .15); }
-.travel__form .btn { margin-top: 4px; }
+.mode input { position: absolute; opacity: 0; pointer-events: none; }
+.mode__icon { display: block; width: 22px; height: 22px; opacity: .9; }
+.mode__icon svg { display: block; }
+.mode__name { font-style: italic; font-size: 1.02rem; color: var(--muted); transition: color .25s; }
+.mode:hover, .mode:hover .mode__name { color: var(--olive); }
+.mode:has(input:checked) { color: var(--rose); }
+.mode:has(input:checked) .mode__name { color: var(--rose-deep); }
+.mode:has(input:checked)::after { transform: scale(1); }
+.mode:has(input:checked) .mode__icon { animation: itin-pop .5s var(--ease-bounce); }
+.mode:has(input:focus-visible) { outline: 2px solid var(--rose-deep); outline-offset: 3px; border-radius: 6px; }
+.travel__flight { display: grid; gap: 16px; }
+.travel__flight:not([hidden]) { animation: rise .4s var(--ease-out) both; }
+.travel__when { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.travel__when .field span { text-align: center; }
+.field select, .field input[type="time"] {
+  width: 100%; min-height: 44px; padding: .4rem .2rem;
+  border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent;
+  font: inherit; font-size: 16px; color: var(--ink); text-align: center; text-align-last: center;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .2s;
+}
+.field input[type="time"]::-webkit-calendar-picker-indicator { opacity: .35; }
+.field select:focus, .field input[type="time"]:focus { outline: none; border-bottom-color: var(--rose); }
+.travel__form .btn { justify-self: center; width: auto; min-width: 160px; margin-top: 2px; }
 .travel__card--done { text-align: center; justify-items: center; gap: 8px; }
 .travel__thanks { margin: 0; color: var(--olive); font-style: italic; }
-.travel__answer { margin: 0; font-family: var(--display); font-size: 1.5rem; color: var(--rose-deep); }
+.travel__answer { margin: 0; font-family: var(--display); font-size: 1.25rem; color: var(--rose-deep); }
 
 /* ---------- Wardrobe dialog ---------- */
 
