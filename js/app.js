@@ -252,6 +252,8 @@
     buildEvents();
     if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
     window.Tinker.mount($('#game'));
+    var typed = load(LOGIN_KEY);
+    window.Insider.mount($('#insider'), normPhone(typed && typed.phone));
     app.hidden = false;
     if (animate && !reduceMotion) {
       gate.classList.add('gate--leaving');
