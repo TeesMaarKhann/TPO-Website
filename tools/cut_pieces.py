@@ -6,6 +6,7 @@ import sys, json, cv2, numpy as np
 from PIL import Image
 S, OUT = sys.argv[1], sys.argv[2]
 SRC = {'haldi':'clean/haldi.png','sangeet':'clean/sangeet.png','wedding':'clean/wedding.jpg',
+       'wedding-day':'clean/wedding-day.jpg',
        'cocktail':'clean/cocktail.jpg','family':'clean/family.png','cover':'clean/cover.png'}
 # piece: (source, [rects as fractions], fill_holes, max output width)
 P = {
@@ -17,6 +18,7 @@ P = {
  'wedding-strip':('wedding',[(0,0,.57,.77),(0,.77,.76,1)], True, 1500),
  'wedding-title':('wedding',[(.59,.08,.97,.27)], False, 1000),
  'wedding-text': ('wedding',[(.575,.36,.97,.68)], False, 1000),
+ 'wedding-text-day': ('wedding-day',[(.575,.36,.97,.68)], False, 1000),
  'family-head':  ('family', [(.1,.07,.9,.25)], False, 1200),
  'family-ishita':('family', [(.08,.27,.92,.555)], False, 1200),
  'family-sarvesh':('family',[(.08,.62,.92,.92)], False, 1200),

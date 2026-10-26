@@ -341,7 +341,9 @@
   var sections = [];
 
   function myEvents() {
-    return EVENTS.filter(function (ev) { return guest.events.indexOf(ev.code) >= 0; });
+    var dayGuest = !/[HS]/.test(guest.events);
+    return EVENTS.filter(function (ev) { return guest.events.indexOf(ev.code) >= 0; })
+      .map(function (ev) { return dayGuest && ev.dayGuests ? Object.assign({}, ev, ev.dayGuests) : ev; });
   }
 
   function buildEvents() {
@@ -467,7 +469,7 @@
 
   // Desktop: each invite split into pieces (assets/desk) and spread across
   // the page. Phones: the whole invite on one screen.
-  function deskLayout(key, actions) {
+  function deskLayout(key, actions, ev) {
     function img(name, cls, alt) {
       return '<img class="d-p ' + cls + '" src="assets/desk/' + name + '.webp" alt="' + esc(alt || '') + '" loading="lazy">';
     }
@@ -482,9 +484,9 @@
       case 'wedding':
         return img('wedding-strip', 'wd-strip') +
           '<div class="d-col wd-col">' + img('wedding-title', 'wd-title', 'Phera Pheri') +
-          img('wedding-text', 'wd-text', '10th December, Thursday. Vidhi 7:30am, Muhurat 12:19pm. Golden Fields Resort, Mulshi.') + actions + '</div>';
+          img(ev.deskText || 'wedding-text', 'wd-text', ev.cardAlt.replace('Illustrated invite: Phera Pheri. ', '')) + actions + '</div>';
       case 'cocktail':
-        return '<img class="d-p c-art" src="assets/mobile/cocktail.webp" alt="Toast and Tonic. 10th December, 5:30pm onwards. Palmwoods Retreat, Mulshi." loading="lazy">' +
+        return '<img class="d-p c-art" src="assets/mobile/cocktail.webp" alt="' + esc(ev.cardAlt) + '" loading="lazy">' +
           '<div class="d-col c-col">' + actions + '</div>';
     }
     return '';
@@ -504,7 +506,7 @@
         '<img class="m-img" src="' + opts.img + '" alt="' + esc(opts.alt) + '" loading="' + (opts.eager ? 'eager' : 'lazy') + '" width="1000" height="1600">' +
         '<div class="m-actions">' + opts.actions + '</div>' +
       '</div>' +
-      '<div class="d-view d-view--' + opts.key + '">' + deskLayout(opts.key, opts.actions) + '</div>';
+      '<div class="d-view d-view--' + opts.key + '">' + deskLayout(opts.key, opts.actions, opts.ev) + '</div>';
     sec.appendChild(wrap);
     if (opts.next) sec.insertAdjacentHTML('beforeend', opts.next);
     return sec;
@@ -568,7 +570,7 @@
   function eventSection(ev, i, list) {
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
-      img: ev.card, alt: ev.cardAlt, particles: ev.particles,
+      ev: ev, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
       actions: '<div class="art-links">' +
         '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
         '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner</button>' +

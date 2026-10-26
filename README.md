@@ -81,6 +81,9 @@ types both, and the browser rebuilds the same key and looks it up.
 - The small motifs floating behind each event (`assets/motifs`) are cut from
   the invites by `tools/cut_motifs.py`. Which set each event uses is
   `particles` in `js/data.js`.
+- The wedding has two invites. Guests at Haldi or Sangeet see `wedding`
+  (Vidhi 7:30am); everyone else (the `| WC` and `| W` blocks) sees
+  `wedding-day` (10:30am onwards). The swap is `dayGuests` in `js/data.js`.
 - Phones show the invites from `assets/mobile`: the same images as
   `assets/invite` with the paper made see-through, so every page sits on one
   cream background (`--paper` in `css/style.css`). After changing an invite,
