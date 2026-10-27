@@ -611,11 +611,11 @@
         '<h2 class="display outro__title">1+1=3</h2>' +
         '<p class="outro__text">See you in Mulshi</p>' +
         '<p class="countdown" hidden><b>0</b> <span></span></p>' +
-        '<div class="event__actions event__actions--center">' +
-          (hasStay() ? '<a class="btn btn--primary btn--sm" href="#itinerary">Itinerary</a>' +
-            '<a class="btn btn--primary btn--sm" href="#stay">Stay</a>' : '') +
-          '<a class="btn btn--primary btn--sm" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
-        '</div>' +
+        '<nav class="outro__links" aria-label="More">' +
+          (hasStay() ? '<a class="outro__link" href="#itinerary">Itinerary</a>' +
+            '<a class="outro__link" href="#stay">Stay</a>' : '') +
+          '<a class="outro__link" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
+        '</nav>' +
       '</div>';
     sec.appendChild(particles('mix'));
     return sec;
