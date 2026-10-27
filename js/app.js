@@ -555,7 +555,7 @@
         '<div class="letter__text">' +
           '<p class="letter__dear">Dear ' + esc(guest.name) + ',</p>' +
           '<img class="letter__divider" src="assets/letter-divider.webp" alt="" width="400" height="57">' +
-          '<p>It’s almost that special time, and we’re so happy to have you with us.</p>' +
+          '<p>Our big day is here, and we’re so excited to have you with us.</p>' +
           '<p>Here’s a little guide with all the tiny and not-so-tiny details, so you can focus on having the best time. (And probably shed a tear)</p>' +
         '</div>' +
       '</div>' + nextCue(list[0]));
