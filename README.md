@@ -50,8 +50,12 @@ types both, and the browser rebuilds the same key and looks it up.
   the right surname then works, so "Kushal Shah Wife" can log in as her own name.
 - Where the POC column spells someone better ("Dilip Dhekne" for "Dekhne
   Dilip"), that spelling works too, and so does the POC's number.
-- Guests with no number of their own use their household's: the nearest row
-  above with a phone that shares their surname (or one just below).
+- Guests with no number of their own can use any number in their family. A
+  family is a row with a POC plus the rows under it with no POC (the sheet
+  merges the POC cell down over them), and any household whose POC names
+  someone in it, even in another block (Smita Deshpande in HSW names Sanjay
+  Deshpande in W, so Antara Shah can use either number).
+- Each guest still sees only their own events, whichever family number they use.
 - A guest with no number who types their name with the wrong number is told
   whose number to use. If the sheet has no number for them, or their household
   isn't clear (no shared surname), they're asked to contact Ishita or Sarvesh.
