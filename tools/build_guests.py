@@ -36,8 +36,11 @@ Which numbers work
 - The guest's own number, and the number of the POC named on their row.
 - Guests with no number use their household's: the nearest row above with a
   phone, if it shares their surname (or a row just below with their surname).
-  If no row shares their surname, no number is guessed: they're asked to
-  contact Ishita or Sarvesh, and listed in the report so you can fix the sheet.
+  Failing that, the row above is still used if it starts a household (has a
+  POC): the sheet merges the POC cell down over the household, and the CSV
+  exports the merged rows as blank. Otherwise no number is guessed: they're
+  asked to contact Ishita or Sarvesh, and listed in the report so you can fix
+  the sheet.
 - A guest with no number who types their full name and a wrong number is told
   whose number to use. That hint is encrypted with their name, so the file
   still reveals nothing to someone who doesn't already know the name.
@@ -229,6 +232,10 @@ def link_households(rows):
             src = above
         elif below:
             src = below
+        elif above and above["phones"] and above["poc"]:
+            # The row above starts a household. Its POC cell is merged down
+            # over this row in the sheet, which the CSV exports as blank.
+            src = above
         elif above and above["phones"]:
             # Maybe their household, maybe not: don't guess. They're asked
             # to contact Ishita or Sarvesh.
