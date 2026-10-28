@@ -716,7 +716,7 @@
     return ITINERARY.map(function (d) {
       var items = d.items.filter(function (it) {
         var ok = it.need === 'R' ? !!resort : ev.indexOf(it.need) >= 0;
-        if (ok && it.with) ok = it.with.split('').some(function (c) { return ev.indexOf(c) >= 0; });
+        if (ok && it.for) ok = it.for.split(' ').indexOf(ev) >= 0;
         if (ok && it.place === 'R' && !resort) ok = false;
         return ok;
       }).map(function (it) {
