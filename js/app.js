@@ -8,6 +8,12 @@
   // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
   // logging off.
   var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
+  // People guests can call for help, shown on the last Events page.
+  // Numbers are 10 digits; leave one empty to show just the name.
+  var CONTACTS = [
+    { name: 'Riya Shah', phone: '' },
+    { name: 'Priti Tahilani', phone: '' }
+  ];
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var guest = null;
 
@@ -147,7 +153,7 @@
     logged[id] = true;
     send(action, page, name);
   }
-  function send(action, page, name) {
+  function send(action, page, name, extra) {
     if (!LOG_URL) return;
     var typed = load(LOGIN_KEY);
     var row = {
@@ -158,6 +164,7 @@
       device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'Phone' : 'Computer',
       visit: visitId
     };
+    if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
     try {
       fetch(LOG_URL, {
         method: 'POST',
@@ -252,6 +259,7 @@
     });
     buildEvents();
     if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
+    buildPlaylist();
     // Pulp Fiction only holds the insiders' section for now, so the page,
     // its menu link and its button on the last Events page are insiders only.
     window.Insider.mount($('#insider'), guest.login).then(function (yes) {
@@ -271,7 +279,7 @@
 
   /* ---------- Routing between the pages ---------- */
 
-  var VIEWS = ['events', 'itinerary', 'stay', 'pulp-fiction'];
+  var VIEWS = ['events', 'itinerary', 'stay', 'playlist', 'pulp-fiction'];
   var isInsider = false;
 
   function route() {
@@ -614,11 +622,42 @@
         '<nav class="outro__links" aria-label="More">' +
           (hasStay() ? '<a class="outro__link" href="#itinerary">Itinerary</a>' +
             '<a class="outro__link" href="#stay">Stay</a>' : '') +
+          '<a class="outro__link" href="#playlist">Playlist</a>' +
           '<a class="outro__link" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
         '</nav>' +
+        contactsHtml() +
       '</div>';
     sec.appendChild(particles('mix'));
     return sec;
+  }
+
+  function contactsHtml() {
+    var phone = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4.1-2 1.5a12.5 12.5 0 0 0 6.3 6.3l1.5-2 4.1 1.4v2.6a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z"/></svg>';
+    var chat = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5 5.6 16A7.8 7.8 0 1 1 8.4 18.6Z"/></svg>';
+    return '<div class="help">' +
+      '<p class="help__title">Need a hand? Ask</p>' +
+      '<ul class="help__list">' + CONTACTS.map(function (c) {
+        var n = String(c.phone || '').replace(/\D/g, '').slice(-10);
+        return '<li><span class="help__name">' + esc(c.name) + '</span>' +
+          (n.length === 10
+            ? '<a class="help__btn" href="tel:+91' + n + '" aria-label="Call ' + esc(c.name) + '">' + phone + '</a>' +
+              '<a class="help__btn" href="https://wa.me/91' + n + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + esc(c.name) + '">' + chat + '</a>'
+            : '') +
+        '</li>';
+      }).join('') + '</ul>' +
+    '</div>';
+  }
+
+  /* ---------- Playlist ---------- */
+
+  function buildPlaylist() {
+    window.Playlist.mount($('#playlist'), {
+      url: LOG_URL,
+      name: guest && guest.name,
+      post: function (s) {
+        send('Added a song', 'Playlist', guest && guest.name, { song: s.song, artist: s.artist, art: s.art, url: s.url });
+      }
+    });
   }
 
   // Days until the guest's first event, counted up once when the last page

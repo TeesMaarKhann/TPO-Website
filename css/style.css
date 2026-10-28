@@ -792,6 +792,62 @@ a.art-link { text-decoration: none; }
 .wardrobe__img { margin-top: 14px; border-radius: 8px; width: 100%; height: auto; }
 .wardrobe__soon { font-size: 3rem; margin: .5rem 0 1rem; animation: bob 1.8s ease-in-out infinite; }
 
+/* Playlist page */
+.playlist { position: relative; text-align: left; }
+.pl-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.pl-search { position: relative; z-index: 5; }
+.pl-search input {
+  width: 100%; padding: 15px 18px 15px 48px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); font: inherit; font-size: 1.05rem; color: var(--ink); box-shadow: var(--shadow);
+  -webkit-appearance: none; appearance: none;
+}
+.pl-search input::placeholder { color: var(--muted); font-style: italic; }
+.pl-search input:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 4px rgba(201, 111, 125, .15), var(--shadow); }
+.pl-search__icon { position: absolute; left: 18px; top: 50%; width: 20px; height: 20px; translate: 0 -50%; fill: none; stroke: var(--olive); stroke-width: 2; stroke-linecap: round; }
+.pl-results {
+  position: absolute; left: 0; right: 0; top: calc(100% + 8px); margin: 0; padding: 6px; list-style: none;
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+  animation: card-pop .25s var(--ease-bounce);
+}
+.pl-results__wait { padding: 10px 12px; color: var(--muted); font-style: italic; }
+.pl-hit {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 0; border-radius: 12px;
+  background: none; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pl-hit:hover, .pl-hit:focus-visible { background: var(--paper-2); outline: none; }
+.pl-hit--typed { border-top: 1px dashed var(--line); border-radius: 0 0 12px 12px; margin-top: 2px; }
+.pl-hit__text, .pl-song__text { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.pl-hit__text b, .pl-song__text b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-hit__text small, .pl-song__text small { color: var(--muted); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-hit__add { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--rose); color: #fff; font-size: 1.3rem; line-height: 1; }
+.pl-art { width: 48px; height: 48px; border-radius: 8px; flex: none; object-fit: cover; background: var(--paper-2); }
+.pl-art--note { display: grid; place-items: center; color: var(--rose); font-size: 1.3rem; }
+.pl-count { margin: 1.6rem 0 .4rem; font-size: .78rem; letter-spacing: .24em; text-transform: uppercase; color: var(--olive); }
+.pl-list { list-style: none; margin: 0; padding: 0; }
+.pl-song { border-bottom: 1px solid var(--line); }
+.pl-song a { display: flex; align-items: center; gap: 14px; padding: 10px 2px; text-decoration: none; border-radius: 10px; transition: background .2s; }
+.pl-song a:hover { background: rgba(169, 181, 142, .14); }
+.pl-song.is-new { animation: pl-in .6s var(--ease-bounce); }
+.pl-song.is-new .pl-art, .pl-song.is-flash .pl-art { animation: pl-spin .7s var(--ease-out); }
+.pl-song.is-flash a { animation: pl-flash 1.6s ease; }
+@keyframes pl-in { from { opacity: 0; transform: translateY(-14px) scale(.96); } }
+@keyframes pl-spin { from { transform: rotate(-25deg) scale(.6); } }
+@keyframes pl-flash { 20%, 60% { background: rgba(201, 111, 125, .16); } }
+
+/* Help contacts, end of the last Events page */
+.help { margin-top: 2.2rem; }
+.help__title { margin: 0 0 .5rem; font-size: .78rem; letter-spacing: .24em; text-transform: uppercase; color: var(--olive); }
+.help__list { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; flex-wrap: wrap; gap: .4rem 1.6rem; }
+.help__list li { display: flex; align-items: center; gap: 6px; }
+.help__name { font-family: var(--display); font-size: 1.35rem; color: var(--ink); margin-right: 4px; }
+.help__btn {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--line); color: var(--rose); transition: background .2s, transform .25s var(--ease-bounce);
+}
+.help__btn:hover { background: rgba(201, 111, 125, .1); }
+.help__btn:active { transform: scale(.9); }
+.help__btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+
 /* Pulp Fiction page */
 .pulp__title { text-align: center; margin-bottom: 2rem; }
 .insider { text-align: center; }

@@ -21,7 +21,14 @@ python3 -m http.server 8000   # then visit http://localhost:8000
    then **Travel plans**: the guest picks flight (with landing day and time),
    car or cab. Answers land in the **Visits** tab as a "Travel plan" row (see
    Visit log below). Guests invited to the wedding alone don't see this page.
-5. **Pulp Fiction** – for now just "Join the Insider", a link to the
+5. **Playlist** – "The Ultimate Playlist", for every guest. Typing shows
+   matching songs (from Spotify once its keys are set, iTunes until then);
+   tapping one, or "Add as I typed it", puts it on a list everyone sees, with
+   who added it. Songs land in the sheet's **Playlist** tab. Needs the updated
+   `tools/visit-log.gs` deployed as a new version (see Visit log below).
+   The last Events page also lists who to call for help: edit `CONTACTS` at
+   the top of `js/app.js`.
+6. **Pulp Fiction** – for now just "Join the Insider", a link to the
    @tpo_insider Instagram. Only guests tagged "TPO Insider Access" in the
    sheet see this page, its menu link and its button on the last Events page.
    The list is kept on its own in `js/insiders.js`. It goes by the person
