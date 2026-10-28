@@ -36,7 +36,10 @@ Guests come from the **Daywise List | RSVP** tab. Its blocks (`| HSWC`,
 H = Haldi, S = Sangeet, W = Wedding, C = Cocktail.
 
 1. In Google Sheets, open that tab → File → Download → CSV.
-2. `python3 tools/build_guests.py ~/Downloads/<file>.csv`
+2. `python3 tools/build_guests.py ~/Downloads/<file>.csv merges.json`
+   (`merges.json` is optional: the tab's merged cells from the Sheets API,
+   `spreadsheets.get` with `fields=sheets.merges`. A CSV loses merges, and
+   merged POC and Contact cells are how families are grouped.)
 3. Commit the new `js/guests.js`. **Don't commit the CSV.**
 
 `js/guests.js` holds no names or phone numbers. Each guest is stored as a key
@@ -52,8 +55,10 @@ types both, and the browser rebuilds the same key and looks it up.
   "Aksahy Avachat"), that spelling works too, and so does the POC's number.
 - Rows with no real first name ("Kushal Shah Wife", "Thuse kaku") can't log in
   until the sheet has their name. The script lists them.
-- Guests with no number of their own use their household's: the nearest row
-  above with a phone that shares their surname (or one just below).
+- Families are grouped by merged POC cells. A guest with no number uses
+  their POC's number (or the family's), and a merged Contact cell is shared
+  by everyone in it. Without merges, the nearest row above with a phone that
+  shares their surname (or one just below) counts as their family.
 - A guest with no number who types their name with the wrong number is told
   whose number to use. If the sheet has no number for them, or their household
   isn't clear (no shared surname), they're asked to contact Ishita or Sarvesh.

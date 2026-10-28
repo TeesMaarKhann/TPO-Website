@@ -4,8 +4,10 @@
 Usage:
     1. In Google Sheets open the "Daywise List | RSVP" tab and choose
        File > Download > Comma-separated values (.csv).
-    2. python3 tools/build_guests.py path/to/daywise.csv
-    3. Delete the CSV. Never commit it.
+    2. Save the tab's merged cells as JSON (optional, but the CSV loses them):
+       the Sheets API's spreadsheets.get with fields=sheets.merges.
+    3. python3 tools/build_guests.py path/to/daywise.csv [path/to/merges.json]
+    4. Delete the CSV. Never commit it.
 
 How guests are stored
 ---------------------
@@ -140,29 +142,68 @@ def norm_phones(cell):
 
 # ---------- Reading the sheet ----------
 
-def read_rows(csv_path):
-    """Every guest row as a dict, grouped into blocks."""
-    rows, events, block = [], None, -1
+def load_merges(path):
+    """Merged cells, as {column: [(first_row, end_row), ...]} (0-based, end
+    excluded). Accepts the Sheets API's {"sheets": [{"merges": [...]}]}, a
+    plain list of its merge objects, or {"E": [[a, b], ...], "G": [...]}."""
+    if not path:
+        return {}
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "sheets" in data:
+        data = [m for sh in data["sheets"] for m in sh.get("merges", [])]
+    out = {}
+    if isinstance(data, dict):
+        for col, spans in data.items():
+            out["ABCDEFGH".index(col)] = [tuple(x) for x in spans]
+        return out
+    for m in data:
+        for c in range(m["startColumnIndex"], m["endColumnIndex"]):
+            out.setdefault(c, []).append((m["startRowIndex"], m["endRowIndex"]))
+    return out
+
+
+def read_rows(csv_path, merges=None):
+    """Every guest row as a dict, grouped into blocks.
+
+    A CSV loses merged cells: only a merge's first row keeps the value. With
+    the sheet's merges, the Contact (E) and POC (G) values are copied down to
+    every row of the merge, and rows sharing a merged POC form one family.
+    """
+    merges = merges or {}
     with open(csv_path, newline="", encoding="utf-8") as f:
-        for row in csv.reader(f):
-            row += [""] * (8 - len(row))
-            m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
-            if not row[0].strip() and re.search(r"[A-Za-z]", row[1]):
-                # A title row. One without "| HSWC" etc. (e.g. "OTHERS- NO
-                # INVITES") isn't invited to anything: skip its rows.
-                events, block = (m.group(1) if m else None), block + 1
-                continue
-            person = row[0].strip()
-            if not events or not person or person == "Person":
-                continue
-            rows.append({
-                "i": len(rows), "block": block, "events": events,
-                "name": re.sub(r"\s+", " ", person),
-                "phones": norm_phones(row[4]),
-                "resort": RESORTS.get(row[5].strip().lower(), ""),
-                "poc": re.sub(r"\s+", " ", row[6].strip()),
-                "aliases": [],
-            })
+        sheet = [row + [""] * (8 - len(row)) for row in csv.reader(f)]
+    family, shared = {}, {}
+    for col in (4, 6):
+        for a, b in merges.get(col, []):
+            for i in range(a + 1, min(b, len(sheet))):
+                sheet[i][col] = sheet[a][col]
+                if col == 6:
+                    family[i] = a
+                elif sheet[a][4].strip():
+                    shared[i] = re.sub(r"\s+", " ", sheet[a][0].strip())
+            if col == 6 and a < len(sheet):
+                family[a] = a
+    rows, events, block = [], None, -1
+    for n, row in enumerate(sheet):
+        m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
+        if not row[0].strip() and re.search(r"[A-Za-z]", row[1]):
+            # A title row. One without "| HSWC" etc. (e.g. "OTHERS- NO
+            # INVITES") isn't invited to anything: skip its rows.
+            events, block = (m.group(1) if m else None), block + 1
+            continue
+        person = row[0].strip()
+        if not events or not person or person == "Person":
+            continue
+        rows.append({
+            "i": len(rows), "block": block, "events": events,
+            "name": re.sub(r"\s+", " ", person),
+            "phones": norm_phones(row[4]),
+            "resort": RESORTS.get(row[5].strip().lower(), ""),
+            "poc": re.sub(r"\s+", " ", row[6].strip()),
+            "aliases": [], "family": family.get(n),
+            # Whose number this is, when it comes from a merged Contact cell.
+            "shared": shared.get(n),
+        })
     return rows
 
 
@@ -206,6 +247,17 @@ def link_households(rows):
     for r in rows:
         r["hint"] = None
         if r["phones"]:
+            r["hint"] = r["shared"]   # "use <that person>'s number"
+            continue
+        if r["family"] is not None:
+            # Grouped by a merged POC cell: use their POC's number, or the
+            # first number in the family.
+            fam = [o for o in rows if o["family"] == r["family"] and o["phones"]]
+            o = r.get("poc_row")
+            src = o if o and o["phones"] else (fam[0] if fam else None)
+            if src:
+                r["use"] += [p for p in src["use"] if p not in r["use"]]
+                r["hint"] = src["name"]
             continue
         if r.get("borrow"):
             # Their POC row lists a number that's really theirs.
@@ -300,15 +352,15 @@ def build(rows):
                 for k in keys:
                     if k and k != "~":
                         add(f"{k}|{p}", r["events"], r["resort"])
-            if not r["phones"]:
+            if not r["phones"] or r["hint"]:
                 k = full_key(name)
                 if k and k not in hints:
                     hints[k] = r["hint"] or ""
     return entries, hints, no_number, guessed
 
 
-def main(csv_path):
-    rows = read_rows(csv_path)
+def main(csv_path, merges_path=None):
+    rows = read_rows(csv_path, load_merges(merges_path))
     entries, hints, no_number, guessed = build(rows)
 
     salt = secrets.token_hex(8)
@@ -363,6 +415,6 @@ def main(csv_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
-    main(sys.argv[1])
+    main(*sys.argv[1:])
