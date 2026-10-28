@@ -12,7 +12,7 @@
  * Every visit, login and page view on the site adds one row to the "Visits"
  * tab. Phone numbers are never sent.
  *
- * Playlist (Pulp Fiction page): songs guests pick go to the "Playlist" tab and
+ * Playlist (Pulp Fiction page): songs guests pick go to the "Spotify" tab and
  * straight into the Spotify playlist below. Setup, once:
  *   1. developer.spotify.com/dashboard → your app → Settings. Under Redirect
  *      URIs add WEB_APP_URL exactly, and save.
@@ -25,7 +25,7 @@
  */
 
 var SHEET_NAME = 'Visits';
-var PLAYLIST_SHEET = 'Playlist';
+var PLAYLIST_SHEET = 'Spotify';
 var EVENT_NAMES = { H: 'Haldi', S: 'Sangeet', W: 'Wedding', C: 'Cocktail' };
 
 var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
@@ -77,10 +77,9 @@ function doGet(e) {
 
 function playlistSheet() {
   var ss = SpreadsheetApp.getActive();
-  var sheet = ss.getSheetByName(PLAYLIST_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(PLAYLIST_SHEET);
-    sheet.appendRow(['Added', 'Song', 'Artist', 'Added by', 'Link', 'Cover', 'Spotify']);
+  var sheet = ss.getSheetByName(PLAYLIST_SHEET) || ss.insertSheet(PLAYLIST_SHEET);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Added', 'Song', 'Artist', 'Added by', 'Link', 'Cover', 'In Spotify playlist']);
     sheet.setFrozenRows(1);
   }
   return sheet;
