@@ -153,10 +153,10 @@ window.ITINERARY = [
   {
     day: 'Thursday', date: '10 December',
     items: [
-      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'P', need: 'R', for: 'HSWC HSW' },
+      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'R', need: 'R', for: 'HSWC HSW' },
       { time: '07:30 AM', what: 'Vidhi',        icon: 'vidhi',     place: 'G', need: 'W', for: 'HSWC HSW' },
+      { time: '10:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R', for: 'HSW' },
       { time: '10:30 AM', what: 'Baraat',       icon: 'horse',     place: 'G', need: 'W' },
-      { time: '11:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R', for: 'HSW' },
       { time: '12:19 PM', what: 'Mangalashtak', icon: 'mangalashtak', place: 'G', need: 'W' },
       { time: '12:30 PM', what: 'Lunch',        icon: 'dinner',    place: 'G', need: 'W' },
       { time: '02:30 PM', what: 'Check-in',     icon: 'check-in',  place: 'R', need: 'R', for: 'WC' },
