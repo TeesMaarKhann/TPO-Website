@@ -648,9 +648,9 @@
     window.Playlist.mount($('#playlist'), {
       url: LOG_URL,
       spotify: SPOTIFY_PLAYLIST,
-      name: guest && guest.name,
+      login: guest && guest.login,
       post: function (s) {
-        send('Added a song', 'Playlist', guest && guest.name, { song: s.song, artist: s.artist, art: s.art, url: s.url });
+        send('Added a song', 'Playlist', guest && guest.name, { song: s.song, artist: s.artist, art: s.art, url: s.url, who: s.who });
       }
     });
   }

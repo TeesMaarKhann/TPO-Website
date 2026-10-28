@@ -1,32 +1,44 @@
-// The Ultimate Playlist: every guest can add songs, and everyone sees the list.
+// The Ultimate Playlist: guests search for songs and pick them straight into
+// the Spotify playlist. The page doesn't list them; "Check the playlist" does.
 //
 // Search goes through the sheet's web app (tools/visit-log.gs), which asks
-// Spotify when its keys are set and iTunes otherwise. If the web app can't be
-// reached, the page asks iTunes straight from the browser. Guests can also add
-// whatever they typed as it is. Picked songs are saved to the "Playlist" tab.
+// Spotify. If the web app can't be reached, the page asks iTunes straight from
+// the browser. Guests can also pick whatever they typed as it is.
+//
+// Each guest gets 5 picks. Past that, picks look the same to them but aren't
+// sent. The web app checks the same limit, so clearing the browser won't help.
 window.Playlist = (function () {
   'use strict';
 
-  var LOCAL_KEY = 'is-wedding-songs-v1';
-  var cfg, box, input, results, list, count, more;
-  var songs = [];
+  var MAX_PICKS = 5;
+  var PICKS_KEY = 'is-wedding-picks-v1';
+  var cfg, box, input, results, note;
   var serverSearch = true;
-  var timer = 0, seq = 0;
+  var timer = 0, seq = 0, noteTimer = 0;
+  var who = '';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function key(s) { return (s.song + '|' + s.artist).toLowerCase().replace(/\s+/g, ' ').trim(); }
-  function spotifyLink(s) {
-    return s.url || 'https://open.spotify.com/search/' + encodeURIComponent((s.song + ' ' + (s.artist || '')).trim());
+  function key(s) { return (s.song + '|' + (s.artist || '')).toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+  // Songs this guest picked on this phone, so repeats and the limit work offline too.
+  function picks() {
+    try { return JSON.parse(localStorage.getItem(PICKS_KEY) || '[]'); } catch (e) { return []; }
   }
-  function loadLocal() {
-    try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (e) { return []; }
+  function savePick(k) {
+    try { var a = picks(); a.push(k); localStorage.setItem(PICKS_KEY, JSON.stringify(a)); } catch (e) { /* ignore */ }
   }
-  function saveLocal(s) {
-    try { var a = loadLocal(); a.unshift(s); localStorage.setItem(LOCAL_KEY, JSON.stringify(a.slice(0, 50))); } catch (e) { /* ignore */ }
+
+  // A short code for the guest, made from their login on this phone. The
+  // web app counts picks by it; their phone number never leaves the phone.
+  function guestCode(login) {
+    if (!login || !window.crypto || !crypto.subtle) return Promise.resolve('');
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode('tpo-picks|' + login)).then(function (b) {
+      return Array.prototype.map.call(new Uint8Array(b).slice(0, 8), function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+    }).catch(function () { return ''; });
   }
 
   /* ---------- Search ---------- */
@@ -81,26 +93,23 @@ window.Playlist = (function () {
     }, 300);
   }
 
-  function row(s, i) {
-    return '<li><button type="button" class="pl-hit" data-i="' + i + '">' +
-      art(s) +
-      '<span class="pl-hit__text"><b>' + esc(s.song) + '</b><small>' + esc(s.artist) + '</small></span>' +
-      '<span class="pl-hit__add" aria-hidden="true">+</span>' +
-    '</button></li>';
-  }
   function art(s) {
     return s.art
       ? '<img class="pl-art" src="' + esc(s.art) + '" alt="" loading="lazy">'
       : '<span class="pl-art pl-art--note" aria-hidden="true">♪</span>';
   }
 
-  var shown = [];
+  var shown = [], typed = null;
   function showResults(tracks, q) {
     shown = tracks || [];
-    var typed = { song: q, artist: '', art: '', url: '' };
+    typed = { song: q, artist: '', art: '', url: '' };
     var html = tracks == null
       ? '<li class="pl-results__wait">Looking…</li>'
-      : shown.map(row).join('');
+      : shown.map(function (s, i) {
+        return '<li><button type="button" class="pl-hit" data-i="' + i + '">' + art(s) +
+          '<span class="pl-hit__text"><b>' + esc(s.song) + '</b><small>' + esc(s.artist) + '</small></span>' +
+          '<span class="pl-hit__add" aria-hidden="true">+</span></button></li>';
+      }).join('');
     html += '<li><button type="button" class="pl-hit pl-hit--typed" data-i="typed">' +
       '<span class="pl-art pl-art--note" aria-hidden="true">+</span>' +
       '<span class="pl-hit__text"><b>“' + esc(q) + '”</b><small>Use what I typed</small></span>' +
@@ -108,7 +117,6 @@ window.Playlist = (function () {
     results.innerHTML = html;
     results.hidden = false;
     input.setAttribute('aria-expanded', 'true');
-    results._typed = typed;
   }
 
   function close() {
@@ -117,75 +125,30 @@ window.Playlist = (function () {
     input.setAttribute('aria-expanded', 'false');
   }
 
-  /* ---------- Adding and listing ---------- */
+  /* ---------- Picking ---------- */
 
-  function add(s) {
-    s = { song: String(s.song).slice(0, 80), artist: String(s.artist || '').slice(0, 80), art: s.art || '', url: s.url || '', by: cfg.name || '' };
+  function pick(s) {
+    if (!s || !s.song) return;
     input.value = '';
     close();
-    var dupe = songs.filter(function (x) { return key(x) === key(s); })[0];
-    if (dupe) { flash(dupe, 'Already on the list'); return; }
-    s.fresh = true;
-    songs.unshift(s);
-    saveLocal(s);
-    render();
-    cfg.post && cfg.post({ action: 'Song', song: s.song, artist: s.artist, art: s.art, url: s.url });
-  }
-
-  function flash(s, msg) {
-    var i = songs.indexOf(s);
-    if (i >= 8) { list.classList.add('is-all'); updateMore(); }
-    var li = list.children[i];
-    if (!li) return;
-    li.classList.remove('is-flash'); void li.offsetWidth; li.classList.add('is-flash');
-    li.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    count.textContent = msg;
-    setTimeout(updateCount, 1800);
-  }
-
-  function updateCount() {
-    var n = songs.length;
-    count.textContent = n ? n + (n === 1 ? ' song' : ' songs') + ' and counting' : '';
-  }
-
-  function render() {
-    list.innerHTML = songs.map(function (s) {
-      return '<li class="pl-song' + (s.fresh ? ' is-new' : '') + '">' +
-        '<a href="' + esc(spotifyLink(s)) + '" target="_blank" rel="noopener">' +
-          art(s) +
-          '<span class="pl-song__text"><b>' + esc(s.song) + '</b>' +
-            '<small>' + esc(s.artist) + (s.artist && s.by ? ' · ' : '') + (s.by ? 'added by ' + esc(s.by) : '') + '</small></span>' +
-        '</a></li>';
-    }).join('');
-    songs.forEach(function (s) { delete s.fresh; });
-    updateCount();
-    updateMore();
-  }
-
-  // Shows the newest 8; the rest open with a button so the page stays short.
-  function updateMore() {
-    var all = list.classList.contains('is-all');
-    more.hidden = songs.length <= 8;
-    more.textContent = all ? 'Show fewer' : 'See all ' + songs.length + ' songs';
-  }
-
-  function loadShared() {
-    var local = loadLocal();
-    var merge = function (shared) {
-      var seen = {};
-      songs = local.concat(shared).filter(function (s) {
-        var k = key(s);
-        if (!s.song || seen[k]) return false;
-        seen[k] = true;
-        return true;
+    input.blur();
+    var k = key(s);
+    var mine = picks();
+    if (mine.indexOf(k) < 0 && mine.length < MAX_PICKS) {
+      savePick(k);
+      cfg.post && cfg.post({
+        song: String(s.song).slice(0, 80), artist: String(s.artist || '').slice(0, 80),
+        art: s.art || '', url: s.url || '', who: who
       });
-      render();
-    };
-    merge([]);
-    if (!cfg.url) return;
-    fetch(cfg.url + '?action=songs').then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.songs) merge(d.songs); })
-      .catch(function () { /* the web app isn't updated yet: show what's on this phone */ });
+    }
+    showNote(s);
+  }
+
+  function showNote(s) {
+    note.innerHTML = '<span class="pl-note__tick" aria-hidden="true">✓</span> <b>' + esc(s.song) + '</b> is on the playlist';
+    note.classList.remove('is-on'); void note.offsetWidth; note.classList.add('is-on');
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { note.classList.remove('is-on'); }, 4000);
   }
 
   /* ---------- Mount ---------- */
@@ -193,48 +156,40 @@ window.Playlist = (function () {
   function mount(el, options) {
     cfg = options || {};
     box = el;
+    guestCode(cfg.login).then(function (c) { who = c; });
     box.innerHTML =
       '<div class="pl-search">' +
         '<svg class="pl-search__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>' +
         '<input id="pl-input" type="search" autocomplete="off" enterkeyhint="done" placeholder="Type a song or an artist"' +
-          ' role="combobox" aria-expanded="false" aria-controls="pl-results" aria-label="Add a song">' +
+          ' role="combobox" aria-expanded="false" aria-controls="pl-results" aria-label="Pick a song">' +
         '<ul id="pl-results" class="pl-results" role="listbox" hidden></ul>' +
       '</div>' +
+      '<p class="pl-note" aria-live="polite"></p>' +
       '<a class="pl-spotify" href="' + esc(cfg.spotify || 'https://open.spotify.com/') + '" target="_blank" rel="noopener">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 9.6c3.4-1 7.1-.7 10 1M7.6 12.6c2.8-.8 5.8-.5 8.2.9M8.2 15.4c2.2-.6 4.5-.4 6.4.7"/></svg>' +
-        '<span>Check the playlist</span><span aria-hidden="true">\u2197</span>' +
-      '</a>' +
-      '<p class="pl-count" aria-live="polite"></p>' +
-      '<ol class="pl-list"></ol>' +
-      '<button class="pl-more" type="button" hidden></button>';
+        '<span>Check the playlist</span><span aria-hidden="true">↗</span>' +
+      '</a>';
     input = box.querySelector('#pl-input');
     results = box.querySelector('#pl-results');
-    list = box.querySelector('.pl-list');
-    count = box.querySelector('.pl-count');
-    more = box.querySelector('.pl-more');
-    more.addEventListener('click', function () {
-      list.classList.toggle('is-all');
-      updateMore();
-    });
+    note = box.querySelector('.pl-note');
 
     input.addEventListener('input', onType);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
         var q = input.value.trim();
-        if (q.length >= 2) add(shown[0] || { song: q });
+        if (q.length >= 2) pick(shown[0] || { song: q });
       }
       if (e.key === 'Escape') close();
     });
     results.addEventListener('click', function (e) {
       var b = e.target.closest('[data-i]');
       if (!b) return;
-      add(b.dataset.i === 'typed' ? results._typed : shown[+b.dataset.i]);
+      pick(b.dataset.i === 'typed' ? typed : shown[+b.dataset.i]);
     });
     document.addEventListener('click', function (e) {
       if (!box.contains(e.target)) close();
     });
-    loadShared();
   }
 
   return { mount: mount };
