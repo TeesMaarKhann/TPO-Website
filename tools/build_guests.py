@@ -23,13 +23,13 @@ the name, E the phone, F the resort, G the household contact (POC).
 
 What a guest can type
 ---------------------
-- Their full name (any word order), or their first name alone, plus a number.
-- Their surname alone finds them, but the site then asks for their first name
-  and surname (any full name with that surname then works, so "Kushal Shah
-  Wife" can log in as "Priya Shah").
-- The sheet's names are messy ("Dekhne Dilip", "Thakre Sheyas"). The POC
-  column usually spells the same person properly ("Dilip Dhekne", "Shreyas
-  Thakre"), so that spelling works too.
+- Their first name is a must: first name alone, or first name and surname
+  (any order), plus a number. The first word in the sheet is the first name.
+- Their surname alone doesn't log in: the site asks for first name and surname.
+- Where the POC column spells the same person differently ("Akshay Avachat"
+  for "Aksahy Avachat"), that spelling works too.
+- Rows with no first name ("Kushal Shah Wife") can't log in until the sheet
+  has their real name; the report lists them.
 
 Which numbers work
 ------------------
@@ -147,8 +147,10 @@ def read_rows(csv_path):
         for row in csv.reader(f):
             row += [""] * (8 - len(row))
             m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
-            if m and not row[0].strip():
-                events, block = m.group(1), block + 1
+            if not row[0].strip() and re.search(r"[A-Za-z]", row[1]):
+                # A title row. One without "| HSWC" etc. (e.g. "OTHERS- NO
+                # INVITES") isn't invited to anything: skip its rows.
+                events, block = (m.group(1) if m else None), block + 1
                 continue
             person = row[0].strip()
             if not events or not person or person == "Person":
@@ -246,24 +248,10 @@ def household_words(o):
 
 
 def first_name_words(rows):
-    """For each name, which words are first names (the rest are surnames).
-
-    Surnames repeat across the list; first names mostly don't. So the word
-    used by the fewest different names is the first name. That handles
-    "Dekhne Dilip" and "Dilip Dhekne" alike. Ties count as first names.
-    """
-    count = {}
-    names = {full_key(n) for r in rows for n in [r["name"]] + r["aliases"]}
-    for n in names:
-        for x in real_words(n.split()):
-            count[x] = count.get(x, 0) + 1
-
+    """The first word of a name is the first name; the rest are surnames."""
     def firsts(name):
         w = real_words(words(name))
-        if len(w) <= 1:
-            return set(w)
-        low = min(count.get(x, 0) for x in w)
-        return {x for x in w if count.get(x, 0) == low}
+        return set(w[:1])
     return firsts
 
 
@@ -340,7 +328,16 @@ def main(csv_path):
         encoding="utf-8")
     print(f"{len(rows)} guests -> {OUT.relative_to(ROOT)}")
 
-    unclear = {p for p, _ in guessed}
+    # Rows with no first name of their own ("Kushal Shah Wife", "Thuse kaku").
+    relation = re.compile(r"(" + "|".join(sorted(NOT_NAMES - {"mr", "mrs", "ms", "dr", "family", "toddler"})) + r")$")
+    nameless = [r["name"] for r in rows
+                if any(relation.search(x) for x in re.findall(r"[a-z]+", r["name"].lower()))]
+    if nameless:
+        print(f"\n{len(nameless)} rows have no first name, so they can't log in. "
+              "Put the person's real name in the sheet and rebuild:")
+        for p in nameless:
+            print("  -", p)
+    unclear = {p for p, _ in guessed} | set(nameless)
     no_number = [p for p in no_number if p not in unclear]
     if no_number:
         print(f"\n{len(no_number)} guests can't log in yet: neither they nor "

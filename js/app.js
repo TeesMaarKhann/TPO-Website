@@ -81,8 +81,8 @@
   //   { hint: 'Kirit Shah' }   on the list, but needs that person's number
   //   { hint: '' }     on the list, but no number for them in the sheet
   //   null             not found
-  // A guest's first name or full name works; a surname (key "~word") only
-  // works when typed with another name.
+  // A guest's first name or full name works. A surname alone (key "~word")
+  // never logs in: it only tells us to ask for the first name too.
   function findGuest(name, phone) {
     var p = normPhone(phone);
     var full = fullKey(name);
@@ -94,7 +94,6 @@
     } else {
       tries.push({ key: full });
       w.forEach(function (x) { tries.push({ key: x, first: x }); });
-      w.forEach(function (x) { tries.push({ key: '~' + x }); });
     }
     var single = w.length === 1 ? derive('~' + w[0] + '|' + p, 12) : Promise.resolve(null);
     // All at once: the browser runs them in parallel.

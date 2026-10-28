@@ -44,12 +44,14 @@ made from their name **and** phone number together, scrambled with a
 deliberately slow method (PBKDF2-SHA256, 600,000 rounds). To log in a guest
 types both, and the browser rebuilds the same key and looks it up.
 
-- Guests can type their full name (any word order) or just their first name.
-  The sheet's word order doesn't matter ("Dekhne Dilip" works as "Dilip").
-- Typing only a surname asks for first name and surname. Any first name with
-  the right surname then works, so "Kushal Shah Wife" can log in as her own name.
-- Where the POC column spells someone better ("Dilip Dhekne" for "Dekhne
-  Dilip"), that spelling works too, and so does the POC's number.
+- First name is a must. Guests type their first name, or first name and
+  surname (any order), with their number. The first word in the sheet is
+  taken as the first name, so write names as "Dilip Dekhne", not "Dekhne Dilip".
+- Typing only a surname doesn't log in: the site asks for first name and surname.
+- Where the POC column spells someone differently ("Akshay Avachat" for
+  "Aksahy Avachat"), that spelling works too, and so does the POC's number.
+- Rows with no real first name ("Kushal Shah Wife", "Thuse kaku") can't log in
+  until the sheet has their name. The script lists them.
 - Guests with no number of their own use their household's: the nearest row
   above with a phone that shares their surname (or one just below).
 - A guest with no number who types their name with the wrong number is told
