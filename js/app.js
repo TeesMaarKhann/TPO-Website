@@ -9,7 +9,7 @@
   // logging off.
   var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
   // The couple's Spotify playlist, opened by "Check the playlist".
-  var SPOTIFY_PLAYLIST = '';
+  var SPOTIFY_PLAYLIST = 'https://open.spotify.com/playlist/0SEF3sXUXnJfSvrZgolKmS';
   // People guests can call for help, shown at the end of the Pulp Fiction page.
   // Numbers are 10 digits; leave one empty to show just the name.
   var CONTACTS = [
