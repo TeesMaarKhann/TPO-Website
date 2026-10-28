@@ -193,12 +193,12 @@ window.Insider = (function () {
       if (LIST.indexOf(h) < 0) return false;
       el.innerHTML =
         '<p class="eyebrow">Members only</p>' +
-        '<h3 class="display insider__title">Join the Insider</h3>' +
+        '<h3 class="display pulp__head">Join the Insider</h3>' +
+        '<p class="pulp__line">Tap to get insider tea for free.</p>' +
         '<a class="insider__link" href="' + LINK + '" target="_blank" rel="noopener" aria-label="TPO Insider on Instagram">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" class="dot"/></svg>' +
           '<span>TPO Insider</span>' +
-        '</a>' +
-        '<p class="insider__line">Tap to get insider tea for free.</p>';
+        '</a>';
       el.hidden = false;
       return true;
     }).catch(function () { return false; });

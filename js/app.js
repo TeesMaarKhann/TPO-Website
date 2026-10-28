@@ -8,6 +8,14 @@
   // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
   // logging off.
   var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
+  // The couple's Spotify playlist, opened by "Check the playlist".
+  var SPOTIFY_PLAYLIST = 'https://open.spotify.com/playlist/0SEF3sXUXnJfSvrZgolKmS';
+  // People guests can call for help, shown at the end of the Pulp Fiction page.
+  // Numbers are 10 digits; leave one empty to show just the name.
+  var CONTACTS = [
+    { name: 'Riya Shah', phone: '' },
+    { name: 'Priti Tahilani', phone: '' }
+  ];
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var guest = null;
 
@@ -147,7 +155,7 @@
     logged[id] = true;
     send(action, page, name);
   }
-  function send(action, page, name) {
+  function send(action, page, name, extra) {
     if (!LOG_URL) return;
     var typed = load(LOGIN_KEY);
     var row = {
@@ -158,6 +166,7 @@
       device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'Phone' : 'Computer',
       visit: visitId
     };
+    if (extra) Object.keys(extra).forEach(function (k) { row[k] = extra[k]; });
     try {
       fetch(LOG_URL, {
         method: 'POST',
@@ -252,13 +261,10 @@
     });
     buildEvents();
     if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
-    // Pulp Fiction only holds the insiders' section for now, so the page,
-    // its menu link and its button on the last Events page are insiders only.
-    window.Insider.mount($('#insider'), guest.login).then(function (yes) {
-      isInsider = yes;
-      document.querySelectorAll('[data-insider]').forEach(function (n) { n.hidden = !yes; });
-      if (yes && location.hash === '#pulp-fiction') route();
-    });
+    buildPlaylist();
+    $('#help').innerHTML = contactsHtml();
+    // Pulp Fiction is for everyone; only its Insider section is insiders only.
+    window.Insider.mount($('#insider'), guest.login);
     app.hidden = false;
     if (animate && !reduceMotion) {
       gate.classList.add('gate--leaving');
@@ -272,7 +278,6 @@
   /* ---------- Routing between the pages ---------- */
 
   var VIEWS = ['events', 'itinerary', 'stay', 'pulp-fiction'];
-  var isInsider = false;
 
   function route() {
     var page = (location.hash || '#events').slice(1);
@@ -280,7 +285,6 @@
     if (VIEWS.indexOf(page) < 0 && page !== 'travel' && !$('#ev-' + page)) page = 'events';
     // Guests invited to the wedding alone don't get Itinerary, Stay or Travel.
     if ((page === 'stay' || page === 'travel' || page === 'itinerary') && !hasStay()) page = 'events';
-    if (page === 'pulp-fiction' && !isInsider) page = 'events';
     var isEvent = !!$('#ev-' + page);
     // Travel plans live at the bottom of the Stay page.
     var view = isEvent ? 'events' : page === 'travel' ? 'stay' : page;
@@ -614,11 +618,41 @@
         '<nav class="outro__links" aria-label="More">' +
           (hasStay() ? '<a class="outro__link" href="#itinerary">Itinerary</a>' +
             '<a class="outro__link" href="#stay">Stay</a>' : '') +
-          '<a class="outro__link" href="#pulp-fiction" data-insider hidden>Pulp Fiction</a>' +
+          '<a class="outro__link" href="#pulp-fiction">Pulp Fiction</a>' +
         '</nav>' +
       '</div>';
     sec.appendChild(particles('mix'));
     return sec;
+  }
+
+  // "Need a hand?" at the end of the Pulp Fiction page. Without a number the
+  // buttons still open the phone's dialer and WhatsApp.
+  function contactsHtml() {
+    var phone = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4.1-2 1.5a12.5 12.5 0 0 0 6.3 6.3l1.5-2 4.1 1.4v2.6a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z"/></svg>';
+    var wa = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="wa-ring" d="M3.6 20.4 4.8 16.3A8.4 8.4 0 1 1 7.8 19.3Z"/>' +
+      '<path class="wa-phone" d="M9.2 7.6c.3 0 .5.1.6.4l.7 1.6c.1.3 0 .5-.1.7l-.5.6c-.1.1-.1.3 0 .5a5.6 5.6 0 0 0 2.7 2.4c.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.3.1.4.4.3.7-.2.9-1 1.6-2 1.6-2.8-.2-5.6-3-5.8-5.8 0-1 .7-1.9 1.6-2.1Z"/></svg>';
+    return '<p class="eyebrow">Need a hand?</p>' +
+      '<ul class="help__list">' + CONTACTS.map(function (c) {
+        var n = String(c.phone || '').replace(/\D/g, '').slice(-10);
+        var full = n.length === 10 ? '91' + n : '';
+        return '<li><span class="help__name">' + esc(c.name) + '</span>' +
+          '<a class="help__btn" href="tel:' + (full ? '+' + full : '') + '" aria-label="Call ' + esc(c.name) + '">' + phone + '</a>' +
+          '<a class="help__btn help__btn--wa" href="https://wa.me/' + full + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + esc(c.name) + '">' + wa + '</a>' +
+        '</li>';
+      }).join('') + '</ul>';
+  }
+
+  /* ---------- Playlist ---------- */
+
+  function buildPlaylist() {
+    window.Playlist.mount($('#playlist'), {
+      url: LOG_URL,
+      spotify: SPOTIFY_PLAYLIST,
+      name: guest && guest.name,
+      post: function (s) {
+        send('Added a song', 'Playlist', guest && guest.name, { song: s.song, artist: s.artist, art: s.art, url: s.url });
+      }
+    });
   }
 
   // Days until the guest's first event, counted up once when the last page
