@@ -41,6 +41,9 @@ Which numbers work
   exports the merged rows as blank. Otherwise no number is guessed: they're
   asked to contact Ishita or Sarvesh, and listed in the report so you can fix
   the sheet.
+- A POC in another block counts too, if only one guest has that name. The
+  households it joins are one family, and guests with no number can use any
+  number in their family (Antara Shah can use Sanjay's or Smita Deshpande's).
 - A guest with no number who types their full name and a wrong number is told
   whose number to use. That hint is encrypted with their name, so the file
   still reveals nothing to someone who doesn't already know the name.
@@ -187,6 +190,13 @@ def link_households(rows):
                 o["aliases"].append(r["poc"])
                 r["poc_row"] = o
                 break
+        else:
+            # Not nearby: the POC may sit in another block (an HSW aunt whose
+            # POC is a W-block uncle). Only trust a single match.
+            found = [o for o in rows if o is not r and same_person(r["poc"], o["name"])]
+            if len(found) == 1:
+                found[0]["aliases"].append(r["poc"])
+                r["poc_row"] = found[0]
 
     for r in rows:
         r["use"] = list(r["phones"])
@@ -245,6 +255,37 @@ def link_households(rows):
             continue
         r["use"] += [p for p in src["use"] if p not in r["use"]]
         r["hint"] = src["name"]
+
+    # Families. A row with a POC starts a household and the rows below it
+    # with no POC belong to it (the sheet merges the POC cell down over
+    # them). Households joined by a POC link (even across blocks) are one
+    # family. Guests with no number of their own can use any family number.
+    parent = {}
+
+    def find(x):
+        while parent.setdefault(x, x) != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    head = {}
+    cur = None
+    for r in rows:
+        if cur is None or r["poc"] or rows[cur]["block"] != r["block"]:
+            cur = r["i"]
+        head[r["i"]] = cur
+    for r in rows:
+        o = r.get("poc_row")
+        if o:
+            parent[find(head[r["i"]])] = find(head[o["i"]])
+    family = {}
+    for r in rows:
+        family.setdefault(find(head[r["i"]]), []).append(r)
+    for r in rows:
+        if r["phones"]:
+            continue
+        for o in family[find(head[r["i"]])]:
+            r["use"] += [p for p in o["phones"] if p not in r["use"]]
     return guessed
 
 
