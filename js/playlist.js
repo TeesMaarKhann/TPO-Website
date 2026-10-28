@@ -145,7 +145,7 @@ window.Playlist = (function () {
 
   function updateCount() {
     var n = songs.length;
-    count.textContent = n ? n + (n === 1 ? ' song' : ' songs') + ' and counting' : 'Be the first to pick one';
+    count.textContent = n ? n + (n === 1 ? ' song' : ' songs') + ' and counting' : '';
   }
 
   function render() {
@@ -200,6 +200,10 @@ window.Playlist = (function () {
           ' role="combobox" aria-expanded="false" aria-controls="pl-results" aria-label="Add a song">' +
         '<ul id="pl-results" class="pl-results" role="listbox" hidden></ul>' +
       '</div>' +
+      '<a class="pl-spotify" href="' + esc(cfg.spotify || 'https://open.spotify.com/') + '" target="_blank" rel="noopener">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 9.6c3.4-1 7.1-.7 10 1M7.6 12.6c2.8-.8 5.8-.5 8.2.9M8.2 15.4c2.2-.6 4.5-.4 6.4.7"/></svg>' +
+        '<span>Check the playlist</span><span aria-hidden="true">\u2197</span>' +
+      '</a>' +
       '<p class="pl-count" aria-live="polite"></p>' +
       '<ol class="pl-list"></ol>' +
       '<button class="pl-more" type="button" hidden></button>';

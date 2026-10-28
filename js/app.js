@@ -8,7 +8,9 @@
   // Web app URL of the visit log (tools/visit-log.gs). Leave empty to turn
   // logging off.
   var LOG_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
-  // People guests can call for help, shown on the last Events page.
+  // The couple's Spotify playlist, opened by "Check the playlist".
+  var SPOTIFY_PLAYLIST = '';
+  // People guests can call for help, shown at the end of the Pulp Fiction page.
   // Numbers are 10 digits; leave one empty to show just the name.
   var CONTACTS = [
     { name: 'Riya Shah', phone: '' },
@@ -645,6 +647,7 @@
   function buildPlaylist() {
     window.Playlist.mount($('#playlist'), {
       url: LOG_URL,
+      spotify: SPOTIFY_PLAYLIST,
       name: guest && guest.name,
       post: function (s) {
         send('Added a song', 'Playlist', guest && guest.name, { song: s.song, artist: s.artist, art: s.art, url: s.url });

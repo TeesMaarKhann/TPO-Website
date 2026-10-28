@@ -30,7 +30,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
    - **The Ultimate Playlist.** Typing shows matching songs (from Spotify
      once its keys are set in Apps Script, iTunes until then); tapping one,
      or "Use what I typed", puts it on a list everyone sees, with who picked
-     it. Songs land in the sheet's **Playlist** tab. Needs the updated
+     it. Songs land in the sheet's **Playlist** tab. "Check the playlist" opens
+     the Spotify playlist set in `SPOTIFY_PLAYLIST` at the top of `js/app.js`. Needs the updated
      `tools/visit-log.gs` deployed as a new version (see Visit log below).
    - **Need a hand?** Riya Shah and Priti Tahilani, each with a call and a
      WhatsApp button. Put their numbers in `CONTACTS` at the top of
