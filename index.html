@@ -55,8 +55,7 @@
           <li><a href="#events" data-nav="events">Events</a></li>
           <li><a href="#itinerary" data-nav="itinerary">Itinerary</a></li>
           <li><a href="#stay" data-nav="stay">Stay</a></li>
-          <li><a href="#playlist" data-nav="playlist">Playlist</a></li>
-          <li data-insider hidden><a href="#pulp-fiction" data-nav="pulp-fiction">Pulp Fiction</a></li>
+          <li><a href="#pulp-fiction" data-nav="pulp-fiction">Pulp Fiction</a></li>
         </ul>
       </nav>
     </header>
@@ -89,19 +88,17 @@
         </div>
       </section>
 
-      <section id="view-playlist" class="view view--page" aria-labelledby="playlist-title" hidden>
-        <div class="page page--narrow">
-          <p class="eyebrow">For the dance floor</p>
-          <h2 id="playlist-title" class="display page__title">The Ultimate Playlist</h2>
-          <p class="page__lede">Add the songs you want to hear at Ishita &amp; Sarvesh&rsquo;s wedding.</p>
-          <div id="playlist" class="playlist"></div>
-        </div>
-      </section>
-
       <section id="view-pulp-fiction" class="view view--page" aria-labelledby="pulp-title" hidden>
         <div class="page page--narrow">
           <h2 id="pulp-title" class="display page__title pulp__title">Pulp Fiction</h2>
-          <div id="insider" class="insider" hidden></div>
+          <section class="pulp__block" aria-labelledby="playlist-title">
+            <p class="eyebrow">For the dance floor</p>
+            <h3 id="playlist-title" class="display pulp__head">The Ultimate Playlist</h3>
+            <p class="page__lede">Which songs get you on the dance floor? Search for your favourites and they go straight onto the list.</p>
+            <div id="playlist" class="playlist"></div>
+          </section>
+          <div id="insider" class="insider pulp__block" hidden></div>
+          <div id="help" class="pulp__block"></div>
         </div>
       </section>
     </main>

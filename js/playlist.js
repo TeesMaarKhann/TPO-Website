@@ -8,7 +8,7 @@ window.Playlist = (function () {
   'use strict';
 
   var LOCAL_KEY = 'is-wedding-songs-v1';
-  var cfg, box, input, results, list, count;
+  var cfg, box, input, results, list, count, more;
   var songs = [];
   var serverSearch = true;
   var timer = 0, seq = 0;
@@ -103,7 +103,7 @@ window.Playlist = (function () {
       : shown.map(row).join('');
     html += '<li><button type="button" class="pl-hit pl-hit--typed" data-i="typed">' +
       '<span class="pl-art pl-art--note" aria-hidden="true">+</span>' +
-      '<span class="pl-hit__text"><b>Add “' + esc(q) + '”</b><small>Just as I typed it</small></span>' +
+      '<span class="pl-hit__text"><b>“' + esc(q) + '”</b><small>Use what I typed</small></span>' +
     '</button></li>';
     results.innerHTML = html;
     results.hidden = false;
@@ -134,6 +134,7 @@ window.Playlist = (function () {
 
   function flash(s, msg) {
     var i = songs.indexOf(s);
+    if (i >= 8) { list.classList.add('is-all'); updateMore(); }
     var li = list.children[i];
     if (!li) return;
     li.classList.remove('is-flash'); void li.offsetWidth; li.classList.add('is-flash');
@@ -144,7 +145,7 @@ window.Playlist = (function () {
 
   function updateCount() {
     var n = songs.length;
-    count.textContent = n ? n + (n === 1 ? ' song' : ' songs') + ' and counting' : 'Be the first to add one';
+    count.textContent = n ? n + (n === 1 ? ' song' : ' songs') + ' and counting' : 'Be the first to pick one';
   }
 
   function render() {
@@ -158,6 +159,14 @@ window.Playlist = (function () {
     }).join('');
     songs.forEach(function (s) { delete s.fresh; });
     updateCount();
+    updateMore();
+  }
+
+  // Shows the newest 8; the rest open with a button so the page stays short.
+  function updateMore() {
+    var all = list.classList.contains('is-all');
+    more.hidden = songs.length <= 8;
+    more.textContent = all ? 'Show fewer' : 'See all ' + songs.length + ' songs';
   }
 
   function loadShared() {
@@ -192,11 +201,17 @@ window.Playlist = (function () {
         '<ul id="pl-results" class="pl-results" role="listbox" hidden></ul>' +
       '</div>' +
       '<p class="pl-count" aria-live="polite"></p>' +
-      '<ol class="pl-list"></ol>';
+      '<ol class="pl-list"></ol>' +
+      '<button class="pl-more" type="button" hidden></button>';
     input = box.querySelector('#pl-input');
     results = box.querySelector('#pl-results');
     list = box.querySelector('.pl-list');
     count = box.querySelector('.pl-count');
+    more = box.querySelector('.pl-more');
+    more.addEventListener('click', function () {
+      list.classList.toggle('is-all');
+      updateMore();
+    });
 
     input.addEventListener('input', onType);
     input.addEventListener('keydown', function (e) {
