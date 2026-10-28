@@ -76,7 +76,8 @@
   }
 
   // Resolves to one of:
-  //   { match: [events, resort], first: 'dilip' }  found them
+  //   { match: [events, resort], first: 'dilip', key: 'dilip|98..' }  found them
+  //                   (key: the login that matched, for the insider check)
   //   { ask: true }    typed only a surname: ask for first name and surname
   //   { hint: 'Kirit Shah' }   on the list, but needs that person's number
   //   { hint: '' }     on the list, but no number for them in the sheet
@@ -110,7 +111,7 @@
         for (var j = 0; j < tries.length; j++) {
           if (hits[j] && tries[j].first) { first = tries[j].first; break; }
         }
-        return { match: hits[i], first: first };
+        return { match: hits[i], first: first, key: tries[i].key + '|' + p };
       }
       if (res[1] && GUESTS.g[hex(res[1])]) return { ask: true };
       return findHint(full).then(function (h) { return h == null ? null : { hint: h }; });
@@ -228,7 +229,7 @@
 
   function login(name, phone, found) {
     var match = found.match;
-    guest = { name: firstName(found.first || name), events: match[0], resort: match[1] || '', v: GUESTS.salt };
+    guest = { name: firstName(found.first || name), events: match[0], resort: match[1] || '', login: found.key, v: GUESTS.salt };
     save(guest, name, phone);
   }
 
@@ -251,10 +252,9 @@
     });
     buildEvents();
     if (hasStay()) { buildItinerary(); buildStay(); buildTravel(); }
-    var typed = load(LOGIN_KEY);
     // Pulp Fiction only holds the insiders' section for now, so the page,
     // its menu link and its button on the last Events page are insiders only.
-    window.Insider.mount($('#insider'), normPhone(typed && typed.phone)).then(function (yes) {
+    window.Insider.mount($('#insider'), guest.login).then(function (yes) {
       isInsider = yes;
       document.querySelectorAll('[data-insider]').forEach(function (n) { n.hidden = !yes; });
       if (yes && location.hash === '#pulp-fiction') route();

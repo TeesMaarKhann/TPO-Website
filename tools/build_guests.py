@@ -19,7 +19,8 @@ Sheet layout
 The tab is split into blocks. Each block starts with a title row whose second
 cell ends in "| HSWC", "| HSW", "| WC" or "| W" (the events that block is
 invited to: Haldi, Sangeet, Wedding, Cocktail). Inside a block: column A is
-the name, E the phone, F the resort, G the household contact (POC).
+the name, E the phone, F the resort, G the household contact (POC), and I
+says "TPO Insider Access" for TPO insiders (used by tools/build_insiders.py).
 
 What a guest can type
 ---------------------
@@ -151,7 +152,7 @@ def read_rows(csv_path):
     rows, events, block = [], None, -1
     with open(csv_path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
-            row += [""] * (8 - len(row))
+            row += [""] * (9 - len(row))
             m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
             if m and not row[0].strip():
                 events, block = m.group(1), block + 1
@@ -165,6 +166,7 @@ def read_rows(csv_path):
                 "phones": norm_phones(row[4]),
                 "resort": RESORTS.get(row[5].strip().lower(), ""),
                 "poc": re.sub(r"\s+", " ", row[6].strip()),
+                "insider": "insider" in row[8].lower(),
                 "aliases": [],
             })
     return rows
@@ -323,6 +325,22 @@ def derive(args):
                                ITERATIONS, dklen=size).hex()
 
 
+def login_keys(r, firsts, surnames=True):
+    """Every "name|number" a guest can log in with. A surname key ("~shah")
+    works with any first name, so surnames=False leaves those out."""
+    out = []
+    for name in [r["name"]] + r["aliases"]:
+        first = firsts(name)
+        keys = [full_key(name)]
+        keys += [x if x in first else "~" + x for x in real_words(words(name))]
+        for p in r["use"]:
+            for k in keys:
+                if k and k != "~" and (surnames or not k.startswith("~")):
+                    if f"{k}|{p}" not in out:
+                        out.append(f"{k}|{p}")
+    return out
+
+
 def build(rows):
     """Plain-text keys and hints, before scrambling."""
     guessed = link_households(rows)
@@ -343,14 +361,9 @@ def build(rows):
     for r in rows:
         if not r["use"]:
             no_number.append(r["name"])
+        for k in login_keys(r, firsts):
+            add(k, r["events"], r["resort"])
         for name in [r["name"]] + r["aliases"]:
-            first = firsts(name)
-            keys = [full_key(name)]
-            keys += [x if x in first else "~" + x for x in real_words(words(name))]
-            for p in r["use"]:
-                for k in keys:
-                    if k and k != "~":
-                        add(f"{k}|{p}", r["events"], r["resort"])
             if not r["phones"]:
                 k = full_key(name)
                 if k and k not in hints:

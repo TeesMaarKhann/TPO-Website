@@ -24,7 +24,10 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 5. **Pulp Fiction** – for now just "Join the Insider", a link to the
    @tpo_insider Instagram. Only guests tagged "TPO Insider Access" in the
    sheet see this page, its menu link and its button on the last Events page.
-   The list is hardwired in `js/insiders.js` (see the note at its top).
+   The list is kept on its own in `js/insiders.js`. It goes by the person
+   (their name with a number they may use), so a family member using an
+   insider's number doesn't see it. After changing tags, run
+   `python3 tools/build_insiders.py <file>.csv` with the same CSV.
 
 The **Menu** button on the top right opens all of these. The map and the
 event pages open Google Maps directions.
@@ -37,7 +40,8 @@ H = Haldi, S = Sangeet, W = Wedding, C = Cocktail.
 
 1. In Google Sheets, open that tab → File → Download → CSV.
 2. `python3 tools/build_guests.py ~/Downloads/<file>.csv`
-3. Commit the new `js/guests.js`. **Don't commit the CSV.**
+3. `python3 tools/build_insiders.py ~/Downloads/<file>.csv`
+4. Commit the new `js/guests.js` and `js/insiders.js`. **Don't commit the CSV.**
 
 `js/guests.js` holds no names or phone numbers. Each guest is stored as a key
 made from their name **and** phone number together, scrambled with a
