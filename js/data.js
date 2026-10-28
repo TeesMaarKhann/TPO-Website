@@ -134,9 +134,9 @@ window.EVENTS = [
 // them:
 //   need: 'H' 'S' 'W' 'C'  - invited to that event
 //   need: 'R'              - staying at a resort
-//   with: 'HS'             - ...and also invited to at least one of these.
-//                            Resort rows are only for Haldi/Sangeet guests, so
-//                            Wedding + Cocktail guests see just those two.
+//   for: 'HSWC WC'         - ...and in one of these blocks. Resort stays
+//                            differ by block: HSWC 9th-11th, HSW 9th-10th,
+//                            WC 10th-11th.
 // place: 'P' 'G' 'A', or 'R' for the guest's own resort.
 window.ITINERARY = [
   {
@@ -144,8 +144,8 @@ window.ITINERARY = [
     items: [
       { time: '11:00 AM', what: 'Haldi',        icon: 'haldi',     place: 'P', need: 'H' },
       { time: '02:00 PM', what: 'Lunch',        icon: 'plate',     place: 'P', need: 'H' },
-      { time: '02:30 PM', what: 'Check-in',     icon: 'check-in',  place: 'R', need: 'R', with: 'HS' },
-      { time: '04:30 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R', with: 'HS' },
+      { time: '02:30 PM', what: 'Check-in',     icon: 'check-in',  place: 'R', need: 'R', for: 'HSWC HSW' },
+      { time: '04:30 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R', for: 'HSWC HSW' },
       { time: '07:00 PM', what: 'Sangeet',      icon: 'disco',     place: 'P', need: 'S' },
       { time: '08:00 PM', what: 'Dinner',       icon: 'dinner',    place: 'P', need: 'S' }
     ]
@@ -153,12 +153,14 @@ window.ITINERARY = [
   {
     day: 'Thursday', date: '10 December',
     items: [
-      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'P', need: 'R', with: 'HS' },
-      { time: '07:30 AM', what: 'Vidhi',        icon: 'vidhi',     place: 'G', need: 'W' },
+      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'R', need: 'R', for: 'HSWC HSW' },
+      { time: '07:30 AM', what: 'Vidhi',        icon: 'vidhi',     place: 'G', need: 'W', for: 'HSWC HSW' },
+      { time: '10:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R', for: 'HSW' },
       { time: '10:30 AM', what: 'Baraat',       icon: 'horse',     place: 'G', need: 'W' },
       { time: '12:19 PM', what: 'Mangalashtak', icon: 'mangalashtak', place: 'G', need: 'W' },
       { time: '12:30 PM', what: 'Lunch',        icon: 'dinner',    place: 'G', need: 'W' },
-      { time: '04:00 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R', with: 'HS' },
+      { time: '02:30 PM', what: 'Check-in',     icon: 'check-in',  place: 'R', need: 'R', for: 'WC' },
+      { time: '04:00 PM', what: 'Hi-Tea',       icon: 'tea',       place: 'R', need: 'R', for: 'HSWC WC' },
       { time: '05:00 PM', what: 'Cocktail',     icon: 'cocktail',  place: 'P', need: 'C' },
       { time: '08:00 PM', what: 'Dinner',       icon: 'dinner',    place: 'P', need: 'C' }
     ]
@@ -166,8 +168,8 @@ window.ITINERARY = [
   {
     day: 'Friday', date: '11 December',
     items: [
-      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'R', need: 'R', with: 'HS' },
-      { time: '11:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R', with: 'HS' }
+      { time: '07:00 AM', what: 'Breakfast',    icon: 'plate',     place: 'R', need: 'R', for: 'HSWC WC' },
+      { time: '11:00 AM', what: 'Check-out',    icon: 'check-out', place: 'R', need: 'R', for: 'HSWC WC' }
     ]
   }
 ];

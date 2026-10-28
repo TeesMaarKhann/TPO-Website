@@ -19,7 +19,8 @@ Sheet layout
 The tab is split into blocks. Each block starts with a title row whose second
 cell ends in "| HSWC", "| HSW", "| WC" or "| W" (the events that block is
 invited to: Haldi, Sangeet, Wedding, Cocktail). Inside a block: column A is
-the name, E the phone, F the resort, G the household contact (POC).
+the name, E the phone, F the resort, G the household contact (POC), and I
+says "TPO Insider Access" for TPO insiders (used by tools/build_insiders.py).
 
 What a guest can type
 ---------------------
@@ -36,8 +37,14 @@ Which numbers work
 - The guest's own number, and the number of the POC named on their row.
 - Guests with no number use their household's: the nearest row above with a
   phone, if it shares their surname (or a row just below with their surname).
-  If no row shares their surname, no number is guessed: they're asked to
-  contact Ishita or Sarvesh, and listed in the report so you can fix the sheet.
+  Failing that, the row above is still used if it starts a household (has a
+  POC): the sheet merges the POC cell down over the household, and the CSV
+  exports the merged rows as blank. Otherwise no number is guessed: they're
+  asked to contact Ishita or Sarvesh, and listed in the report so you can fix
+  the sheet.
+- A POC in another block counts too, if only one guest has that name. The
+  households it joins are one family, and guests with no number can use any
+  number in their family (Antara Shah can use Sanjay's or Smita Deshpande's).
 - A guest with no number who types their full name and a wrong number is told
   whose number to use. That hint is encrypted with their name, so the file
   still reveals nothing to someone who doesn't already know the name.
@@ -145,7 +152,7 @@ def read_rows(csv_path):
     rows, events, block = [], None, -1
     with open(csv_path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
-            row += [""] * (8 - len(row))
+            row += [""] * (9 - len(row))
             m = re.search(r"\|\s*([HSWC]+)\s*$", row[1].strip())
             if m and not row[0].strip():
                 events, block = m.group(1), block + 1
@@ -159,6 +166,7 @@ def read_rows(csv_path):
                 "phones": norm_phones(row[4]),
                 "resort": RESORTS.get(row[5].strip().lower(), ""),
                 "poc": re.sub(r"\s+", " ", row[6].strip()),
+                "insider": "insider" in row[8].lower(),
                 "aliases": [],
             })
     return rows
@@ -184,6 +192,13 @@ def link_households(rows):
                 o["aliases"].append(r["poc"])
                 r["poc_row"] = o
                 break
+        else:
+            # Not nearby: the POC may sit in another block (an HSW aunt whose
+            # POC is a W-block uncle). Only trust a single match.
+            found = [o for o in rows if o is not r and same_person(r["poc"], o["name"])]
+            if len(found) == 1:
+                found[0]["aliases"].append(r["poc"])
+                r["poc_row"] = found[0]
 
     for r in rows:
         r["use"] = list(r["phones"])
@@ -229,6 +244,10 @@ def link_households(rows):
             src = above
         elif below:
             src = below
+        elif above and above["phones"] and above["poc"]:
+            # The row above starts a household. Its POC cell is merged down
+            # over this row in the sheet, which the CSV exports as blank.
+            src = above
         elif above and above["phones"]:
             # Maybe their household, maybe not: don't guess. They're asked
             # to contact Ishita or Sarvesh.
@@ -238,6 +257,37 @@ def link_households(rows):
             continue
         r["use"] += [p for p in src["use"] if p not in r["use"]]
         r["hint"] = src["name"]
+
+    # Families. A row with a POC starts a household and the rows below it
+    # with no POC belong to it (the sheet merges the POC cell down over
+    # them). Households joined by a POC link (even across blocks) are one
+    # family. Guests with no number of their own can use any family number.
+    parent = {}
+
+    def find(x):
+        while parent.setdefault(x, x) != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    head = {}
+    cur = None
+    for r in rows:
+        if cur is None or r["poc"] or rows[cur]["block"] != r["block"]:
+            cur = r["i"]
+        head[r["i"]] = cur
+    for r in rows:
+        o = r.get("poc_row")
+        if o:
+            parent[find(head[r["i"]])] = find(head[o["i"]])
+    family = {}
+    for r in rows:
+        family.setdefault(find(head[r["i"]]), []).append(r)
+    for r in rows:
+        if r["phones"]:
+            continue
+        for o in family[find(head[r["i"]])]:
+            r["use"] += [p for p in o["phones"] if p not in r["use"]]
     return guessed
 
 
@@ -275,6 +325,22 @@ def derive(args):
                                ITERATIONS, dklen=size).hex()
 
 
+def login_keys(r, firsts, surnames=True):
+    """Every "name|number" a guest can log in with. A surname key ("~shah")
+    works with any first name, so surnames=False leaves those out."""
+    out = []
+    for name in [r["name"]] + r["aliases"]:
+        first = firsts(name)
+        keys = [full_key(name)]
+        keys += [x if x in first else "~" + x for x in real_words(words(name))]
+        for p in r["use"]:
+            for k in keys:
+                if k and k != "~" and (surnames or not k.startswith("~")):
+                    if f"{k}|{p}" not in out:
+                        out.append(f"{k}|{p}")
+    return out
+
+
 def build(rows):
     """Plain-text keys and hints, before scrambling."""
     guessed = link_households(rows)
@@ -295,14 +361,9 @@ def build(rows):
     for r in rows:
         if not r["use"]:
             no_number.append(r["name"])
+        for k in login_keys(r, firsts):
+            add(k, r["events"], r["resort"])
         for name in [r["name"]] + r["aliases"]:
-            first = firsts(name)
-            keys = [full_key(name)]
-            keys += [x if x in first else "~" + x for x in real_words(words(name))]
-            for p in r["use"]:
-                for k in keys:
-                    if k and k != "~":
-                        add(f"{k}|{p}", r["events"], r["resort"])
             if not r["phones"]:
                 k = full_key(name)
                 if k and k not in hints:
