@@ -795,10 +795,10 @@ a.art-link { text-decoration: none; }
 /* Playlist page */
 .playlist { position: relative; text-align: left; }
 .pl-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
-.pl-search { position: relative; z-index: 5; }
+.pl-search { position: relative; z-index: 5; width: min(86%, 380px); margin: 0 auto; }
 .pl-search input {
-  width: 100%; padding: 15px 18px 15px 48px; border: 1px solid var(--line); border-radius: 999px;
-  background: var(--card); font: inherit; font-size: 1.05rem; color: var(--ink); box-shadow: var(--shadow);
+  width: 100%; padding: 12px 18px 12px 46px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); font: inherit; font-size: 1rem; color: var(--ink); box-shadow: var(--shadow);
   -webkit-appearance: none; appearance: none;
 }
 .pl-search input::placeholder { color: var(--muted); font-style: italic; }
