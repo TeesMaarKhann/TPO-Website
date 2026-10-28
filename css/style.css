@@ -877,15 +877,15 @@ a.art-link { text-decoration: none; }
   margin-top: 2.6rem; padding-top: 2.6rem;
   background: linear-gradient(rgba(107, 122, 69, .16), rgba(107, 122, 69, .16)) 50% 0 / 96px 1px no-repeat;
 }
-.pulp__head { font-size: clamp(2rem, 8vw, 2.6rem); color: var(--rose); margin-bottom: .2rem; }
+.pulp__head { margin: .2rem 0 .3rem; font-size: 1.9rem; color: var(--ink); }
+.pulp__line { margin: 0 0 1.2rem; color: var(--muted); }
 .insider { text-align: center; }
-.insider__title { margin: .2rem 0 .3rem; font-size: 1.9rem; color: var(--ink); }
-.insider__line { color: var(--muted); margin: .2rem 0 0; }
 .insider__link {
   display: inline-flex; align-items: center; gap: 10px; margin: .1rem 0;
   font-family: var(--display); font-size: 2.4rem; color: var(--rose); text-decoration: none;
   transition: color .2s, transform .25s var(--ease-bounce);
 }
+.insider__link { line-height: 1; }
 .insider__link:hover { color: var(--rose-deep); }
 .insider__link:active { transform: scale(.97); }
 .insider__link svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; }
