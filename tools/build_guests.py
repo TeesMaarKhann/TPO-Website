@@ -170,22 +170,26 @@ def link_households(rows):
     """Work out which numbers each guest may use. Returns names to check."""
     near = 8   # how far up/down to look for the person a POC names
 
-    # The POC column often names someone nearby. If that is this same person
-    # spelt better, keep the spelling. If it is someone else, this row's
-    # number is usually theirs too, and theirs is this row's.
+    # The POC column names this person's family contact. If that is this
+    # same person spelt better, keep the spelling. If it is someone else, this
+    # row's number is usually theirs too, and theirs is this row's. Look
+    # nearby first, then anywhere in the sheet (families span the blocks).
     for r in rows:
         if not r["poc"] or not real_words(words(r["poc"])):
             continue
         if same_person(r["poc"], r["name"]):
             r["aliases"].append(r["poc"])
             continue
-        for o in rows:
-            if o is r or o["block"] != r["block"] or abs(o["i"] - r["i"]) > near:
-                continue
-            if same_person(r["poc"], o["name"]):
-                o["aliases"].append(r["poc"])
-                r["poc_row"] = o
-                break
+        found = [o for o in rows if o is not r and same_person(r["poc"], o["name"])]
+        if not found:
+            continue
+        nearby = [o for o in found
+                  if o["block"] == r["block"] and abs(o["i"] - r["i"]) <= near]
+        with_phone = [o for o in found if o["phones"]]
+        o = min(nearby or with_phone or found, key=lambda o: abs(o["i"] - r["i"]))
+        if o["block"] == r["block"] and abs(o["i"] - r["i"]) <= near:
+            o["aliases"].append(r["poc"])
+        r["poc_row"] = o
 
     for r in rows:
         r["use"] = list(r["phones"])
@@ -208,6 +212,11 @@ def link_households(rows):
             src = r["borrow"]
             r["use"] += [p for p in src["use"] if p not in r["use"]]
             r["hint"] = src["name"]
+            continue
+        o = r.get("poc_row")
+        if o and o["phones"]:
+            # No number, but their POC (anywhere in the sheet) has one.
+            r["hint"] = o["name"]
             continue
         if r["poc"]:
             continue   # starts its own household, but no number in the sheet
@@ -344,6 +353,7 @@ def main(csv_path):
               "their household have a phone number in the sheet. Add one and rebuild.")
         for p in no_number:
             print("  -", p)
+    guessed = [g for g in guessed if g[0] not in nameless]
     if guessed:
         print(f"\n{len(guessed)} guests have no number and don't share a surname "
               "with the row above, so they can't log in yet. Add their number (or fix the "

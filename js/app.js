@@ -195,7 +195,7 @@
         track('Couldn’t log in', '', name);
         if (found && found.ask) {
           $('#g-name').focus();
-          return showErr('Please type your first name and surname.');
+          return showErr('Please type your first name and last name.');
         }
         if (found && found.hint) {
           return showErr('Welcome ' + firstName(realWords(nameWords(name))[0] || name) + '!\n' +
@@ -206,7 +206,7 @@
             'Please contact Ishita or Sarvesh to log in.');
         }
         if (realWords(nameWords(name)).length < 2) {
-          return showErr('We couldn’t find you. Try your first name and surname, with the number your invite was sent to.');
+          return showErr('We couldn’t find you. Try your first name and last name, with the number your invite was sent to.');
         }
         showErr('We couldn’t find you on the guest list. Use your name and the number your invite was sent to (for couples and families, that may be one number for everyone). Still stuck? Give Ishita or Sarvesh a call.');
       }).catch(function () {
