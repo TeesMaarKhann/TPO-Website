@@ -13,7 +13,8 @@
  * tab. Phone numbers are never sent.
  *
  * Playlist (Pulp Fiction page): songs guests pick go to the "Spotify" tab and
- * straight into the Spotify playlist below. Setup, once:
+ * straight into the Spotify playlist below, up to MAX_PICKS per guest.
+ * Setup, once:
  *   1. developer.spotify.com/dashboard → your app → Settings. Under Redirect
  *      URIs add WEB_APP_URL exactly, and save.
  *   2. Here: Project Settings (gear) → Script properties → add SPOTIFY_ID
@@ -30,6 +31,8 @@ var EVENT_NAMES = { H: 'Haldi', S: 'Sangeet', W: 'Wedding', C: 'Cocktail' };
 
 var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyejSqjUJzisBrEoAyAu_4P2Sl7JIJx3ae3hQ8gSzr9o8UEJWbfDDIpOHJfpz9KFRSo/exec';
 var SPOTIFY_PLAYLIST_ID = '0SEF3sXUXnJfSvrZgolKmS';
+// Songs each guest can put in the playlist. The site doesn't tell them.
+var MAX_PICKS = 5;
 
 function doPost(e) {
   try {
@@ -65,8 +68,7 @@ function doGet(e) {
   if (p.code || p.error) return spotifyCallback(p);
   var out = {};
   try {
-    if (p.action === 'songs') out = { songs: listSongs() };
-    else if (p.action === 'search') out = { tracks: searchSongs(String(p.q || '').slice(0, 80)) };
+    if (p.action === 'search') out = { tracks: searchSongs(String(p.q || '').slice(0, 80)) };
   } catch (err) {
     out = { error: String(err) };
   }
@@ -79,9 +81,10 @@ function playlistSheet() {
   var ss = SpreadsheetApp.getActive();
   var sheet = ss.getSheetByName(PLAYLIST_SHEET) || ss.insertSheet(PLAYLIST_SHEET);
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Added', 'Song', 'Artist', 'Added by', 'Link', 'Cover', 'In Spotify playlist']);
+    sheet.appendRow(['Added', 'Song', 'Artist', 'Added by', 'Link', 'Cover', 'In Spotify playlist', 'Guest code']);
     sheet.setFrozenRows(1);
   }
+  if (!sheet.getRange(1, 8).getValue()) sheet.getRange(1, 8).setValue('Guest code');
   return sheet;
 }
 
@@ -94,10 +97,15 @@ function addSong(d) {
     var sheet = playlistSheet();
     var artist = clip(d.artist);
     var k = (song + '|' + artist).toLowerCase();
-    var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 2, sheet.getLastRow() - 1, 2).getValues() : [];
+    var who = clip(d.who);
+    var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 2, sheet.getLastRow() - 1, 7).getValues() : [];
+    var mine = 0;
     for (var i = 0; i < rows.length; i++) {
       if ((rows[i][0] + '|' + rows[i][1]).toLowerCase() === k) return;
+      if (who && rows[i][6] === who) mine++;
     }
+    // Guest code: a short code the site makes per guest, never their number.
+    if (mine >= MAX_PICKS) return;
     var url = link(d.url, 'https://open.spotify.com/');
     var art = link(d.art, 'https://');
     var status = '';
@@ -111,19 +119,10 @@ function addSong(d) {
     } catch (err) {
       status = 'Error: ' + String(err).slice(0, 120);
     }
-    sheet.appendRow([new Date(), song, artist, clip(d.name), url, art, status]);
+    sheet.appendRow([new Date(), song, artist, clip(d.name), url, art, status, who]);
   } finally {
     lock.releaseLock();
   }
-}
-
-function listSongs() {
-  var sheet = playlistSheet();
-  var n = sheet.getLastRow() - 1;
-  if (n < 1) return [];
-  return sheet.getRange(2, 2, n, 5).getValues().reverse().slice(0, 400).map(function (r) {
-    return { song: String(r[0]), artist: String(r[1]), by: String(r[2]), url: String(r[3]), art: String(r[4]) };
-  });
 }
 
 // Only keeps links that start the way they should.

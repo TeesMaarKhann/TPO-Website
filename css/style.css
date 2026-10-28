@@ -816,14 +816,14 @@ a.art-link { text-decoration: none; }
 }
 .pl-hit:hover, .pl-hit:focus-visible { background: var(--paper-2); outline: none; }
 .pl-hit--typed { border-top: 1px dashed var(--line); border-radius: 0 0 12px 12px; margin-top: 2px; }
-.pl-hit__text, .pl-song__text { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
-.pl-hit__text b, .pl-song__text b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pl-hit__text small, .pl-song__text small { color: var(--muted); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-hit__text { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.pl-hit__text b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-hit__text small { color: var(--muted); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pl-hit__add { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--rose); color: #fff; font-size: 1.3rem; line-height: 1; }
 .pl-art { width: 48px; height: 48px; border-radius: 8px; flex: none; object-fit: cover; background: var(--paper-2); }
 .pl-art--note { display: grid; place-items: center; color: var(--rose); font-size: 1.3rem; }
 .pl-spotify {
-  display: flex; width: fit-content; align-items: center; gap: 8px; margin: 1.2rem auto 0; padding: 8px 16px 8px 10px;
+  display: flex; width: fit-content; align-items: center; gap: 8px; margin: .6rem auto 0; padding: 8px 16px 8px 10px;
   border-radius: 999px; border: 1px solid var(--line); text-decoration: none; color: var(--ink); font-size: .95rem;
   transition: background .2s, transform .25s var(--ease-bounce);
 }
@@ -833,24 +833,13 @@ a.art-link { text-decoration: none; }
 .pl-spotify circle { fill: #1ed760; }
 .pl-spotify path { fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; }
 .pl-spotify span:last-child { color: var(--muted); font-size: .85rem; }
-.pl-count:empty { display: none; }
-.pl-count { margin: 1.6rem 0 .4rem; font-size: .78rem; letter-spacing: .24em; text-transform: uppercase; color: var(--olive); }
-.pl-list { list-style: none; margin: 0; padding: 0; }
-.pl-song { border-bottom: 1px solid var(--line); }
-.pl-list:not(.is-all) .pl-song:nth-child(n+9) { display: none; }
-.pl-more {
-  display: block; margin: 1rem auto 0; padding: 8px 18px; border: 1px solid var(--line); border-radius: 999px;
-  background: none; color: var(--rose); font-style: italic; cursor: pointer; transition: background .2s;
+.pl-note {
+  margin: .8rem auto 0; min-height: 1.5em; font-size: .95rem; color: var(--olive); text-align: center;
+  opacity: 0; transform: translateY(-4px); transition: opacity .3s, transform .3s var(--ease-out);
 }
-.pl-more:hover { background: rgba(201, 111, 125, .08); }
-.pl-song a { display: flex; align-items: center; gap: 14px; padding: 10px 2px; text-decoration: none; border-radius: 10px; transition: background .2s; }
-.pl-song a:hover { background: rgba(169, 181, 142, .14); }
-.pl-song.is-new { animation: pl-in .6s var(--ease-bounce); }
-.pl-song.is-new .pl-art, .pl-song.is-flash .pl-art { animation: pl-spin .7s var(--ease-out); }
-.pl-song.is-flash a { animation: pl-flash 1.6s ease; }
-@keyframes pl-in { from { opacity: 0; transform: translateY(-14px) scale(.96); } }
-@keyframes pl-spin { from { transform: rotate(-25deg) scale(.6); } }
-@keyframes pl-flash { 20%, 60% { background: rgba(201, 111, 125, .16); } }
+.pl-note.is-on { opacity: 1; transform: none; }
+.pl-note b { font-weight: 500; color: var(--ink); }
+.pl-note__tick { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #1ed760; color: #fff; font-size: .75rem; margin-right: 2px; }
 
 /* Need a hand?, end of the Pulp Fiction page: one contact under another */
 .help__list { list-style: none; margin: .5rem auto 0; padding: 0; display: grid; gap: 6px; width: fit-content; }

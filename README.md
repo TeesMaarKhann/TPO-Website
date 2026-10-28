@@ -29,13 +29,14 @@ python3 -m http.server 8000   # then visit http://localhost:8000
      `python3 tools/build_insiders.py <file>.csv` with the same CSV.
    - **The Ultimate Playlist.** Typing shows matching songs from Spotify;
      tapping one, or "Use what I typed" (matched to the closest Spotify
-     song), adds it to the sheet's **Spotify** tab and straight into the
-     Spotify playlist, and everyone sees the list with who picked it.
-     "Check the playlist" opens the playlist (`SPOTIFY_PLAYLIST` at the top
-     of `js/app.js`). Setup is in the comment at the top of
-     `tools/visit-log.gs`: Spotify keys in Script properties, then run
-     `connectSpotify` once. The Spotify tab's **In Spotify playlist** column says
-     whether each song made it in.
+     song), puts it straight into the Spotify playlist and the sheet's
+     **Spotify** tab, and the guest sees a short "is on the playlist" note.
+     The page doesn't list songs; "Check the playlist" opens the playlist
+     (`SPOTIFY_PLAYLIST` at the top of `js/app.js`). Each guest gets 5 songs
+     (`MAX_PICKS` in `tools/visit-log.gs`); extra picks look the same to them
+     but aren't added. Setup is in the comment at the top of
+     `tools/visit-log.gs`. The **In Spotify playlist** column says whether
+     each song made it in.
    - **Need a hand?** Riya Shah and Priti Tahilani, each with a call and a
      WhatsApp button. Put their numbers in `CONTACTS` at the top of
      `js/app.js`; until then the buttons just open the dialer and WhatsApp.
