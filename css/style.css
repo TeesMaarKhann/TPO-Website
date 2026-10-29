@@ -412,7 +412,7 @@ a.art-link { text-decoration: none; }
 }
 .letter__art {
   position: relative; display: block; flex: none;
-  width: min(100%, 560px, clamp(180px, 100cqh - 340px, 54cqh) * 1138 / 916);
+  width: min(100%, 560px, clamp(170px, 100cqh - 390px, 52cqh) * 1138 / 916);
   aspect-ratio: 1138 / 916;
   padding: 0; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -447,6 +447,22 @@ a.art-link { text-decoration: none; }
 .letter__text p + p { margin-top: 1em; }
 .letter__dear { font-size: 1.3em; overflow-wrap: anywhere; }
 .letter__divider { display: block; width: 7.5em; height: auto; margin: .5em auto 1em; }
+
+/* Event buttons under the letter: tap to glide to that event */
+.letter__jump {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; margin-top: 1.5em; font-style: normal;
+}
+.letter__chip {
+  font-family: var(--serif); font-style: italic; font-size: .9em; color: var(--chip);
+  background: color-mix(in srgb, var(--paper) 88%, var(--chip));
+  border: 1.5px solid color-mix(in srgb, var(--chip) 55%, transparent);
+  border-radius: 999px; padding: .4em .85em; cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .2s var(--ease-out), background .2s, color .2s;
+}
+.letter__chip:hover, .letter__chip:focus-visible { background: var(--chip); color: #fff; }
+.letter__chip:active { transform: scale(.95); }
 
 /* Pops in when the page comes into view, then the words follow */
 .letter__art, .letter__text { opacity: 0; transition: opacity .6s var(--ease-out), transform .9s var(--ease-out); }

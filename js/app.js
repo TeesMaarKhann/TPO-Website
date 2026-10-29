@@ -561,8 +561,12 @@
           '<img class="letter__divider" src="assets/letter-divider.webp" alt="" width="400" height="57">' +
           '<p>Our big day is here, and we’re so excited to have you with us.</p>' +
           '<p>Here’s a little guide with all the tiny and not-so-tiny details, so you can focus on having the best time. (And probably shed a tear)</p>' +
+          // Jump straight to any of the guest's events (or just scroll)
+          '<nav class="letter__jump" aria-label="Your events">' + list.map(function (ev) {
+            return '<button class="letter__chip" type="button" data-next="' + ev.id + '" style="--chip:' + ev.accent + '">' + esc(ev.tab) + '</button>';
+          }).join('') + '</nav>' +
         '</div>' +
-      '</div>' + nextCue(list[0]));
+      '</div>');
     var art = sec.querySelector('.letter__art');
     art.addEventListener('click', function (e) {
       art.classList.remove('is-popping');
