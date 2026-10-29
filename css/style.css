@@ -893,60 +893,6 @@ a.art-link { text-decoration: none; }
 .insider__link:active { transform: scale(.97); }
 .insider__link svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .insider__link svg .dot { fill: currentColor; stroke: none; }
-/* Words on the call / WhatsApp buttons show on phones only */
-.help__lbl { display: none; }
-
-/* Pulp Fiction on phones: each part is a card with full-width buttons */
-@media (max-width: 640px) {
-  #view-pulp-fiction .page { padding-top: 20px; }
-  .pulp__title { margin-bottom: 1.2rem; }
-  .pulp__block {
-    position: relative; padding: 22px 18px 20px; border: 1px solid var(--line); border-radius: 24px;
-    background: var(--card); box-shadow: 0 14px 30px -22px rgba(63, 64, 51, .45);
-  }
-  .pulp__block:not([hidden]) ~ .pulp__block { margin-top: 14px; padding-top: 22px; background: var(--card); }
-  .pulp__head { font-size: 1.6rem; }
-  .pulp__line { font-size: .95rem; margin-bottom: 1rem; }
-
-  /* Insider: soft rose card, one solid button */
-  .insider { background: linear-gradient(160deg, #fbeef0, var(--card) 70%); border-color: rgba(201, 111, 125, .3); }
-  .insider__link {
-    display: flex; justify-content: center; width: 100%; padding: 14px 18px; border-radius: 999px;
-    background: var(--rose); color: #fff; font-family: var(--serif); font-size: 1.05rem; line-height: 1.2;
-    box-shadow: 0 10px 20px -12px var(--rose-deep);
-  }
-  .insider__link:hover { background: var(--rose-deep); color: #fff; }
-  .insider__link svg { width: 22px; height: 22px; }
-
-  /* Playlist: search and Spotify button span the card */
-  .pulp__block[aria-labelledby="playlist-title"] { z-index: 2; }
-  .pl-search { width: 100%; }
-  /* Only take up room once a song has been added */
-  .pl-note:not(.is-on) { height: 0; min-height: 0; margin-top: 0; overflow: hidden; }
-  .pl-spotify {
-    width: 100%; justify-content: center; margin-top: 12px; padding: 13px 18px;
-    background: #1ed760; border-color: #1ed760; color: #10361d; font-size: 1rem; font-weight: 500;
-  }
-  .pl-spotify:hover { background: #1cc457; }
-  .pl-spotify circle { fill: #10361d; }
-  .pl-spotify path { stroke: #1ed760; }
-  .pl-spotify span:last-child { color: inherit; }
-
-  /* Need a hand?: name on top, two labelled buttons under it */
-  .help__list { width: 100%; gap: 10px; margin-top: .8rem; }
-  .help__list li {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px;
-    border-radius: 18px; background: var(--paper);
-  }
-  .help__name { grid-column: 1 / -1; margin: 0 0 2px; padding: 0; text-align: left; color: var(--ink); font-size: 1.05rem; }
-  .help__btn {
-    width: auto; height: 44px; border-radius: 999px; display: flex; gap: 8px; justify-content: center;
-    background: #fff; font-size: .95rem; text-decoration: none;
-  }
-  .help__btn--wa { background: #25d366; border-color: #25d366; color: #fff; }
-  .help__btn--wa:hover { background: #20bd5a; }
-  .help__lbl { display: inline; }
-}
 
 /* ---------- Keyframes ---------- */
 

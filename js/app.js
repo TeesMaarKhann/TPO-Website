@@ -636,8 +636,8 @@
         var n = String(c.phone || '').replace(/\D/g, '').slice(-10);
         var full = n.length === 10 ? '91' + n : '';
         return '<li><span class="help__name">' + esc(c.name) + '</span>' +
-          '<a class="help__btn" href="tel:' + (full ? '+' + full : '') + '" aria-label="Call ' + esc(c.name) + '">' + phone + '<span class="help__lbl">Call</span></a>' +
-          '<a class="help__btn help__btn--wa" href="https://wa.me/' + full + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + esc(c.name) + '">' + wa + '<span class="help__lbl">WhatsApp</span></a>' +
+          '<a class="help__btn" href="tel:' + (full ? '+' + full : '') + '" aria-label="Call ' + esc(c.name) + '">' + phone + '</a>' +
+          '<a class="help__btn help__btn--wa" href="https://wa.me/' + full + '" target="_blank" rel="noopener" aria-label="WhatsApp ' + esc(c.name) + '">' + wa + '</a>' +
         '</li>';
       }).join('') + '</ul>';
   }
