@@ -894,6 +894,29 @@ a.art-link { text-decoration: none; }
 .insider__link svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .insider__link svg .dot { fill: currentColor; stroke: none; }
 
+/* Pulp Fiction on phones: fewer words, two thin outlined buttons.
+   "Need a hand?" stays as it is. */
+@media (max-width: 640px) {
+  .pulp__title { margin-bottom: 1.2rem; }
+  .pulp__block:not([hidden]) ~ .pulp__block { margin-top: 1.6rem; padding-top: 1.6rem; }
+  .insider .eyebrow, .insider .pulp__line,
+  [aria-labelledby="playlist-title"] .eyebrow { display: none; }
+  .insider .pulp__head, [aria-labelledby="playlist-title"] .pulp__head { font-size: 1.5rem; margin-bottom: .2rem; }
+  .insider .pulp__head { margin-bottom: .8rem; }
+  [aria-labelledby="playlist-title"] .pulp__line { font-size: .92rem; margin-bottom: .9rem; }
+  .insider__link, .pl-spotify {
+    display: flex; width: fit-content; margin: 0 auto; justify-content: center; gap: 8px;
+    padding: 10px 22px; border-radius: 999px; background: none;
+    font-family: var(--serif); font-size: 1rem; line-height: 1.2;
+  }
+  .insider__link { color: var(--rose-deep); border: 1px solid rgba(201, 111, 125, .5); }
+  .insider__link svg { width: 18px; height: 18px; }
+  .pl-spotify { color: var(--ink); border: 1px solid rgba(30, 215, 96, .55); margin-top: 14px; }
+  .pl-search { width: 100%; }
+  /* The "is on the playlist" note only takes up room once a song is added */
+  .pl-note:not(.is-on) { height: 0; min-height: 0; margin-top: 0; overflow: hidden; }
+}
+
 /* ---------- Keyframes ---------- */
 
 @keyframes breathe { 50% { translate: 0 -6px; } }
