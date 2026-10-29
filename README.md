@@ -43,7 +43,9 @@ python3 -m http.server 8000   # then visit http://localhost:8000
      WhatsApp button. Put their numbers in `CONTACTS` at the top of
      `js/app.js`; until then the buttons just open the dialer and WhatsApp.
 
-The **Menu** button on the top right opens all of these.
+The **Menu** button on the top right opens all of these. Under **Events** it
+lists only the events that guest is invited to (Haldi, Sangeet, Wedding,
+Cocktail); tapping one jumps straight to it.
 
 After changing any file in `css/` or `js/`, bump the `?v=` date on its tags
 at the bottom (and top) of `index.html`, so guests' browsers fetch the new

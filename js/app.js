@@ -338,6 +338,13 @@
     var list = $('#menu-list');
     list.hidden = false;
     $('#menu-btn').setAttribute('aria-expanded', 'true');
+    // Mark the event on screen, if any. The "Events" link itself stays marked.
+    var onScreen = document.body.dataset.view === 'events' && $('.scroller > .is-active');
+    list.querySelectorAll('[data-ev]').forEach(function (a) {
+      var on = !!onScreen && onScreen.id === 'ev-' + a.dataset.ev;
+      a.classList.toggle('is-current', on);
+      if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+    });
     void list.offsetWidth;
     list.classList.add('is-open');
   }
@@ -364,6 +371,11 @@
     var dots = $('#dots');
     scroller.innerHTML = dots.innerHTML = '';
     var list = myEvents();
+
+    // Menu: one link per event this guest is invited to, under "Events".
+    $('#menu-events').innerHTML = list.map(function (ev) {
+      return '<li><a href="#' + ev.id + '" data-ev="' + ev.id + '">' + esc(ev.tab) + '</a></li>';
+    }).join('');
 
     scroller.appendChild(welcomeSection(list));
     list.forEach(function (ev, i) {
