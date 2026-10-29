@@ -71,26 +71,74 @@ window.Playlist = (function () {
     });
   }
 
-  function search(q) {
-    if (serverSearch && cfg.url) {
-      return fromServer(q).catch(function () { serverSearch = false; return fromItunes(q); });
-    }
-    return fromItunes(q);
+  // Both searches start together. Apple answers in a blink, so its matches show
+  // first; when Spotify answers, the same songs quietly get Spotify links and
+  // covers (songs without one are matched on Spotify by the web app later).
+  var cache = {};
+  var warmed = false;
+
+  function norm(t) {
+    return String(t || '').toLowerCase().replace(/\(.*?\)|\[.*?\]|-\s*from .*$/g, '').replace(/[^a-z0-9]+/g, '');
+  }
+  function upgrade(list, spotify) {
+    return list.map(function (s) {
+      var m = spotify.filter(function (t) { return norm(t.song) === norm(s.song); })[0];
+      return m ? { song: s.song, artist: s.artist, art: m.art || s.art, url: m.url } : s;
+    });
+  }
+
+  function warm() {
+    if (warmed || !cfg.url || !serverSearch) return;
+    warmed = true;
+    fetch(cfg.url + '?action=search&q=arijit').catch(function () { /* ignore */ });
   }
 
   function onType() {
     var q = input.value.trim();
+    var k = q.toLowerCase();
     clearTimeout(timer);
     if (q.length < 2) { close(); return; }
-    showResults(null, q);
+    if (cache[k]) { ++seq; showResults(cache[k], q); return; }
+    if (results.hidden) showResults(null, q);
+    else retype(q);
     timer = setTimeout(function () {
       var mine = ++seq;
-      search(q).then(function (tracks) {
-        if (mine === seq) showResults(tracks.slice(0, 6), q);
-      }).catch(function () {
-        if (mine === seq) showResults([], q);
-      });
-    }, 300);
+      var gotSpotify = false, apple = null, pending = 2;
+      var finish = function () {
+        if (--pending === 0 && mine === seq && apple == null && !gotSpotify) showResults([], q);
+      };
+      fromItunes(q).then(function (tracks) {
+        apple = tracks.slice(0, 6);
+        if (!gotSpotify && mine === seq && apple.length) { cache[k] = apple; showResults(apple, q); }
+      }).catch(function () { /* Spotify may still answer */ }).then(finish);
+      if (serverSearch && cfg.url) {
+        fromServer(q).then(function (tracks) {
+          tracks = tracks.slice(0, 6);
+          if (!tracks.length) return;
+          gotSpotify = true;
+          if (apple && apple.length) {
+            cache[k] = upgrade(apple, tracks);
+            if (mine === seq) refresh(cache[k]);
+          } else {
+            cache[k] = tracks;
+            if (mine === seq) showResults(tracks, q);
+          }
+        }).catch(function () { serverSearch = false; }).then(finish);
+      } else {
+        finish();
+      }
+    }, 150);
+  }
+
+  // Swaps in Spotify links and covers without redrawing, so nothing jumps
+  // under a guest's finger.
+  function refresh(list) {
+    list.forEach(function (s, i) {
+      shown[i] = s;
+      var b = results.querySelector('[data-i="' + i + '"]');
+      var old = b && b.querySelector('.pl-art');
+      if (old && s.art && old.tagName !== 'IMG') old.outerHTML = art(s);
+    });
   }
 
   function art(s) {
@@ -99,9 +147,16 @@ window.Playlist = (function () {
       : '<span class="pl-art pl-art--note" aria-hidden="true">♪</span>';
   }
 
-  var shown = [], typed = null;
+  var shown = [], typed = null, shownFor = '';
+  // Keeps "Use what I typed" in step while the new matches are on their way.
+  function retype(q) {
+    typed = { song: q, artist: '', art: '', url: '' };
+    var b = results.querySelector('.pl-hit--typed b');
+    if (b) b.textContent = '\u201c' + q + '\u201d';
+  }
   function showResults(tracks, q) {
     shown = tracks || [];
+    shownFor = q;
     typed = { song: q, artist: '', art: '', url: '' };
     var html = tracks == null
       ? '<li class="pl-results__wait">Looking…</li>'
@@ -174,11 +229,12 @@ window.Playlist = (function () {
     note = box.querySelector('.pl-note');
 
     input.addEventListener('input', onType);
+    input.addEventListener('focus', warm);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
         var q = input.value.trim();
-        if (q.length >= 2) pick(shown[0] || { song: q });
+        if (q.length >= 2) pick((shownFor === q && shown[0]) || { song: q });
       }
       if (e.key === 'Escape') close();
     });
