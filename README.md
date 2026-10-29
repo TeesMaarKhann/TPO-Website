@@ -27,7 +27,9 @@ python3 -m http.server 8000   # then visit http://localhost:8000
      `js/insiders.js`; it goes by the person (their name with a number they
      may use). After changing tags, run
      `python3 tools/build_insiders.py <file>.csv` with the same CSV.
-   - **The Ultimate Playlist.** Typing shows matching songs from Spotify;
+   - **The Ultimate Playlist.** Typing shows matches at once (Apple's music
+     search, straight from the phone); Spotify's answer follows and adds its
+     links. A tap on the search bar wakes the sheet's web app early.
      tapping one, or "Use what I typed" (matched to the closest Spotify
      song), puts it straight into the Spotify playlist and the sheet's
      **Spotify** tab, and the guest sees a short "is on the playlist" note.
@@ -41,7 +43,11 @@ python3 -m http.server 8000   # then visit http://localhost:8000
      WhatsApp button. Put their numbers in `CONTACTS` at the top of
      `js/app.js`; until then the buttons just open the dialer and WhatsApp.
 
-The **Menu** button on the top right opens all of these. The map and the
+The **Menu** button on the top right opens all of these.
+
+After changing any file in `css/` or `js/`, bump the `?v=` date on its tags
+at the bottom (and top) of `index.html`, so guests' browsers fetch the new
+copy instead of a saved old one. The map and the
 event pages open Google Maps directions.
 
 ## Updating the guest list
