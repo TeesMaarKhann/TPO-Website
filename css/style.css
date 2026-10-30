@@ -230,6 +230,7 @@ a { color: inherit; }
   content: ""; position: absolute; left: .3rem; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
   border-radius: 50%; background: var(--rose);
 }
+.menu__sub { margin: 0; padding: 0; list-style: none; }
 .menu__sub a.is-current::before { left: 1.1rem; }
 .menu__sub a { padding-left: 1.7rem; font-size: .98rem; color: var(--muted); min-height: 40px; }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
