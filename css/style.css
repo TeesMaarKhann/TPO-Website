@@ -912,7 +912,9 @@ a.art-link { text-decoration: none; }
   .insider__link { color: var(--rose-deep); border: 1px solid rgba(201, 111, 125, .5); }
   .insider__link svg { width: 18px; height: 18px; }
   .pl-spotify { color: var(--ink); border: 1px solid rgba(30, 215, 96, .55); margin-top: 14px; }
-  .pl-search { width: 100%; }
+  .pl-search { width: min(84%, 300px); }
+  .pl-search input { padding: 8px 14px 8px 38px; }
+  .pl-search__icon { left: 14px; width: 16px; height: 16px; }
   /* The "is on the playlist" note only takes up room once a song is added */
   .pl-note:not(.is-on) { height: 0; min-height: 0; margin-top: 0; overflow: hidden; }
 }
