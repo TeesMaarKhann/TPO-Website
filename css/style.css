@@ -893,6 +893,53 @@ main { padding-top: var(--topbar); }
 .insider__link svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .insider__link svg .dot { fill: currentColor; stroke: none; }
 
+/* Pulp Fiction buttons: the same white icon chips as Wardrobe planner / Directions */
+.insider__link, .pl-spotify {
+  display: flex; width: fit-content; margin: 0 auto; align-items: center; gap: .55rem;
+  height: 46px; box-sizing: border-box; padding: 0 1.05rem 0 .35rem; border: 0; border-radius: 999px;
+  background: #fff; font-family: var(--serif); font-style: italic; font-size: 1.1rem; line-height: 1;
+  box-shadow: 0 1px 2px rgba(63, 64, 51, .08), 0 8px 20px -12px rgba(63, 64, 51, .4);
+}
+.insider__link svg, .pl-spotify svg {
+  width: 36px; height: 36px; padding: 8.5px; box-sizing: border-box; border-radius: 50%; flex: none;
+  background: color-mix(in srgb, currentColor 14%, #fff);
+}
+.insider__link { color: var(--rose-deep); }
+.pl-spotify { color: #2e7d4a; margin-top: 16px; }
+.pl-spotify span:last-child { color: inherit; font-size: .9rem; }
+/* Text sizes follow Wardrobe planner / Directions on each screen */
+@media (max-width: 899px), (orientation: portrait) {
+  .insider__link, .pl-spotify { font-size: 1.08rem; }
+}
+@media (max-width: 380px) {
+  .insider__link, .pl-spotify { font-size: .98rem; padding-right: .8rem; }
+  .insider__link svg, .pl-spotify svg { width: 32px; height: 32px; padding: 7px; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+  .insider__link, .pl-spotify { font-size: 1.3rem; }
+}
+.insider__link:hover, .pl-spotify:hover {
+  background: #fff; transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(63, 64, 51, .08), 0 12px 24px -12px rgba(63, 64, 51, .5);
+}
+
+/* Pulp Fiction on phones: fewer words, white icon-chip buttons.
+   "Need a hand?" stays as it is. */
+@media (max-width: 640px) {
+  .pulp__title { margin-bottom: 1.2rem; }
+  .pulp__block:not([hidden]) ~ .pulp__block { margin-top: 1.6rem; padding-top: 1.6rem; }
+  .insider .eyebrow, .insider .pulp__line,
+  [aria-labelledby="playlist-title"] .eyebrow { display: none; }
+  .insider .pulp__head, [aria-labelledby="playlist-title"] .pulp__head { font-size: 1.5rem; margin-bottom: .2rem; }
+  .insider .pulp__head { margin-bottom: .8rem; }
+  [aria-labelledby="playlist-title"] .pulp__line { font-size: .92rem; margin-bottom: .9rem; }
+  .pl-search { width: min(84%, 300px); }
+  .pl-search input { padding: 8px 14px 8px 38px; }
+  .pl-search__icon { left: 14px; width: 16px; height: 16px; }
+  /* The "is on the playlist" note only takes up room once a song is added */
+  .pl-note:not(.is-on) { height: 0; min-height: 0; margin-top: 0; overflow: hidden; }
+}
+
 /* ---------- Keyframes ---------- */
 
 @keyframes breathe { 50% { translate: 0 -6px; } }
