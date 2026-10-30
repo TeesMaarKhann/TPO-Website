@@ -338,6 +338,13 @@
     var list = $('#menu-list');
     list.hidden = false;
     $('#menu-btn').setAttribute('aria-expanded', 'true');
+    // Mark the event on screen, if any. The "Events" link itself stays marked.
+    var onScreen = document.body.dataset.view === 'events' && $('.scroller > .is-active');
+    list.querySelectorAll('[data-ev]').forEach(function (a) {
+      var on = !!onScreen && onScreen.id === 'ev-' + a.dataset.ev;
+      a.classList.toggle('is-current', on);
+      if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+    });
     void list.offsetWidth;
     list.classList.add('is-open');
   }
@@ -364,6 +371,11 @@
     var dots = $('#dots');
     scroller.innerHTML = dots.innerHTML = '';
     var list = myEvents();
+
+    // Menu: one link per event this guest is invited to, under "Events".
+    $('#menu-events').innerHTML = list.map(function (ev) {
+      return '<li><a href="#' + ev.id + '" data-ev="' + ev.id + '">' + esc(ev.tab) + '</a></li>';
+    }).join('');
 
     scroller.appendChild(welcomeSection(list));
     list.forEach(function (ev, i) {
@@ -591,15 +603,21 @@
     return sec;
   }
 
+  // Small line icons inside the event buttons.
+  var HANGER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M12 7.2a2 2 0 1 1 2-2c0 1.1-.9 1.5-2 2.3v1.2m0 0L3.4 15.6c-.8.6-.4 1.9.6 1.9h16c1 0 1.4-1.3.6-1.9L12 8.7Z"/></svg>';
+  var PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">' +
+    '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 1 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>';
+
   function eventSection(ev, i, list) {
     return artPanel({
       key: ev.id, tab: ev.tab, cls: 'panel--event panel--' + ev.id, accent: ev.accent,
       ev: ev, img: ev.card, alt: ev.cardAlt, particles: ev.particles,
       actions: '<div class="art-links">' +
         '<button class="art-link" type="button" data-wardrobe="' + ev.id + '">' +
-        '<span aria-hidden="true" class="art-link__line"></span>Wardrobe planner</button>' +
+        '<span class="art-link__ic" aria-hidden="true">' + HANGER + '</span>Wardrobe planner</button>' +
         '<a class="art-link" href="' + WeddingMap.directions(ev.place) + '" target="_blank" rel="noopener" data-dir="' + esc(PLACES[ev.place].name) + '">' +
-        '<span>Directions&nbsp;↗</span><span aria-hidden="true" class="art-link__line"></span></a></div>',
+        '<span class="art-link__ic" aria-hidden="true">' + PIN + '</span>Directions</a></div>',
       next: nextCue(list[i + 1])
     });
   }

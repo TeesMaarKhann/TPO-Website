@@ -230,6 +230,7 @@ a { color: inherit; }
   content: ""; position: absolute; left: .3rem; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
   border-radius: 50%; background: var(--rose);
 }
+.menu__sub { margin: 0; padding: 0; list-style: none; }
 .menu__sub a.is-current::before { left: 1.1rem; }
 .menu__sub a { padding-left: 1.7rem; font-size: .98rem; color: var(--muted); min-height: 40px; }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } }
@@ -342,27 +343,29 @@ main { padding-top: var(--topbar); }
 .m-actions { flex: none; }
 .d-view { display: none; }
 
-/* Buttons painted onto the invite: a watercolour wash in the event colour */
-.art-link {
-  position: relative; isolation: isolate;
-  display: inline-flex; align-items: center; justify-content: center; gap: .7rem;
-  min-height: 44px; background: none; border: 0; padding: .45rem 1.1rem; cursor: pointer;
-  font-family: var(--serif); font-style: italic; font-size: 1.15rem; line-height: 1.1; color: var(--ev);
-  white-space: nowrap; -webkit-tap-highlight-color: transparent;
-  transition: transform .25s var(--ease-bounce);
+/* Buttons: white chips with a soft shadow; event ones carry a round icon */
+.art-link, .outro__link {
+  display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+  height: 46px; box-sizing: border-box; padding: 0 1.05rem; border: 0; border-radius: 999px;
+  background: #fff; cursor: pointer; text-decoration: none; white-space: nowrap;
+  font-family: var(--serif); font-style: italic; font-size: 1.1rem; line-height: 1;
+  box-shadow: 0 1px 2px rgba(63, 64, 51, .08), 0 8px 20px -12px rgba(63, 64, 51, .4);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .25s var(--ease-bounce), box-shadow .2s;
 }
-.art-link::after, .outro__link::after {
-  content: ""; position: absolute; inset: -2px -6px; z-index: -1; pointer-events: none;
-  background: currentColor; opacity: .17; transition: opacity .2s;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' preserveAspectRatio='none'%3E%3Cpath d='M7 33C14 14 52 7 98 9s88-4 95 15c5 15-6 27-50 28S38 59 17 53C4 49 2 41 7 33Z'/%3E%3Cpath opacity='.45' d='M3 26C16 8 70 4 120 6s76 6 78 20-30 30-80 29S10 50 5 42C1 36 1 30 3 26Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' preserveAspectRatio='none'%3E%3Cpath d='M7 33C14 14 52 7 98 9s88-4 95 15c5 15-6 27-50 28S38 59 17 53C4 49 2 41 7 33Z'/%3E%3Cpath opacity='.45' d='M3 26C16 8 70 4 120 6s76 6 78 20-30 30-80 29S10 50 5 42C1 36 1 30 3 26Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+.art-link { color: var(--ev); padding-left: .35rem; }
+.art-link__ic {
+  display: grid; place-items: center; flex: none;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: color-mix(in srgb, currentColor 14%, #fff);
 }
-.art-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .5rem .7rem; }
-a.art-link { text-decoration: none; }
-.art-link__line { display: none; }
-.art-link:hover::after, .art-link:focus-visible::after,
-.outro__link:hover::after, .outro__link:focus-visible::after { opacity: .28; }
-.art-link:focus-visible, .outro__link:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 4px; }
+.art-link__ic svg { width: 19px; height: 19px; }
+.art-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .6rem .7rem; }
+.art-link:hover, .outro__link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(63, 64, 51, .08), 0 12px 24px -12px rgba(63, 64, 51, .5);
+}
+.art-link:focus-visible, .outro__link:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .art-link:active, .outro__link:active { transform: scale(.96); }
 .art-note { margin: 0; font-style: italic; color: var(--olive); font-size: 1.02rem; line-height: 1.45; text-align: center; }
 .art-note__hi { display: block; color: var(--rose-deep); font-size: 1.15rem; }
@@ -372,9 +375,11 @@ a.art-link { text-decoration: none; }
   .m-actions .art-note { font-size: .9rem; line-height: 1.35; }
   .m-actions .art-note__hi { font-size: 1rem; }
 }
-@media (max-width: 360px) {
-  .art-link, .outro__link { padding-inline: .8rem; }
-  .m-actions .art-link { font-size: 1rem; }
+@media (max-width: 380px) {
+  .m-actions .art-links { gap: .45rem; }
+  .art-link, .outro__link { font-size: .98rem; padding-right: .8rem; }
+  .outro__link { padding-left: .8rem; }
+  .art-link__ic { width: 32px; height: 32px; }
 }
 
 /* ---- Desktop: the invite pieces spread across the whole page ---- */
@@ -523,13 +528,7 @@ a.art-link { text-decoration: none; }
 /* Last Events page: plain text links, "Itinerary · Stay · Pulp Fiction" */
 /* Last Events page: "Itinerary", "Stay", "Pulp Fiction" as painted buttons */
 .outro__links { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .6rem .7rem; margin-top: 1.6rem; }
-.outro__link {
-  position: relative; isolation: isolate;
-  display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
-  font-family: var(--serif); font-size: 1.1rem; letter-spacing: .02em; line-height: 1.1; white-space: nowrap;
-  color: var(--rose-deep); text-decoration: none; padding: .45rem 1.05rem;
-  -webkit-tap-highlight-color: transparent; transition: transform .25s var(--ease-bounce);
-}
+.outro__link { color: var(--rose-deep); }
 .countdown { margin: 1.1rem 0 0; color: var(--olive); font-style: italic; font-size: 1rem; }
 .countdown b { font-family: var(--display); font-style: normal; font-weight: 400; font-size: 2.2rem; color: var(--rose); font-variant-numeric: tabular-nums; vertical-align: -.12em; margin-right: .15em; }
 .countdown:not([hidden]) { animation: rise .8s .3s var(--ease-out) both; }
@@ -894,7 +893,7 @@ a.art-link { text-decoration: none; }
 .insider__link svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .insider__link svg .dot { fill: currentColor; stroke: none; }
 
-/* Pulp Fiction on phones: fewer words, two thin outlined buttons.
+/* Pulp Fiction on phones: fewer words, white icon-chip buttons.
    "Need a hand?" stays as it is. */
 @media (max-width: 640px) {
   .pulp__title { margin-bottom: 1.2rem; }
@@ -904,14 +903,20 @@ a.art-link { text-decoration: none; }
   .insider .pulp__head, [aria-labelledby="playlist-title"] .pulp__head { font-size: 1.5rem; margin-bottom: .2rem; }
   .insider .pulp__head { margin-bottom: .8rem; }
   [aria-labelledby="playlist-title"] .pulp__line { font-size: .92rem; margin-bottom: .9rem; }
+  /* Same white icon chips as Wardrobe planner / Directions */
   .insider__link, .pl-spotify {
-    display: flex; width: fit-content; margin: 0 auto; justify-content: center; gap: 8px;
-    padding: 10px 22px; border-radius: 999px; background: none;
-    font-family: var(--serif); font-size: 1rem; line-height: 1.2;
+    display: flex; width: fit-content; margin: 0 auto; align-items: center; gap: .55rem;
+    height: 46px; box-sizing: border-box; padding: 0 1.05rem 0 .35rem; border: 0; border-radius: 999px;
+    background: #fff; font-family: var(--serif); font-style: italic; font-size: 1.08rem; line-height: 1;
+    box-shadow: 0 1px 2px rgba(63, 64, 51, .08), 0 8px 20px -12px rgba(63, 64, 51, .4);
   }
-  .insider__link { color: var(--rose-deep); border: 1px solid rgba(201, 111, 125, .5); }
-  .insider__link svg { width: 18px; height: 18px; }
-  .pl-spotify { color: var(--ink); border: 1px solid rgba(30, 215, 96, .55); margin-top: 14px; }
+  .insider__link svg, .pl-spotify svg {
+    width: 36px; height: 36px; padding: 8.5px; box-sizing: border-box; border-radius: 50%; flex: none;
+    background: color-mix(in srgb, currentColor 14%, #fff);
+  }
+  .insider__link { color: var(--rose-deep); }
+  .pl-spotify { color: #2e7d4a; margin-top: 14px; }
+  .pl-spotify span:last-child { color: inherit; font-size: .9rem; }
   .pl-search { width: min(84%, 300px); }
   .pl-search input { padding: 8px 14px 8px 38px; }
   .pl-search__icon { left: 14px; width: 16px; height: 16px; }
